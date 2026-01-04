@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import { Workspace, Feedback, Vote, FEEDBACK_STATUS } from '@/models';
 import { applyRateLimit } from '@/lib/rateLimit';
+import { canPerformAction, getFeedbackLimit } from '@/lib/plans';
 
 /**
  * GET /api/workspaces/[workspaceId]/feedback
@@ -152,6 +153,20 @@ export async function POST(request, { params }) {
       return NextResponse.json(
         { error: 'Please sign in to submit feedback' },
         { status: 401 }
+      );
+    }
+
+    // Check plan limits
+    const currentFeedbackCount = await Feedback.countDocuments({ 
+      workspaceId: workspace._id,
+      mergedIntoId: null,
+    });
+    
+    if (!canPerformAction(workspace.plan, 'create_feedback', currentFeedbackCount)) {
+      const limit = getFeedbackLimit(workspace.plan);
+      return NextResponse.json(
+        { error: `Feedback limit reached (${limit}). Upgrade to Pro for unlimited feedback.` },
+        { status: 403 }
       );
     }
 

@@ -92,6 +92,15 @@ const FeedbackSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // GitHub integration
+    githubIssueUrl: {
+      type: String,
+      default: null,
+    },
+    githubIssueNumber: {
+      type: Number,
+      default: null,
+    },
   },
   {
     timestamps: true,

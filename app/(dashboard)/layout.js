@@ -17,6 +17,10 @@ import {
   Building2,
   Menu,
   X,
+  BarChart3,
+  CreditCard,
+  Code,
+  Plug,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -25,8 +29,15 @@ const navigation = [
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Roadmap', href: '/roadmap', icon: Map },
   { name: 'Changelog', href: '/changelog', icon: Bell },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Team', href: '/team', icon: Users },
-  { name: 'Settings', href: '/settings', icon: Settings },
+];
+
+const settingsNavigation = [
+  { name: 'General', href: '/settings', icon: Settings },
+  { name: 'Widget', href: '/settings/widget', icon: Code },
+  { name: 'Billing', href: '/settings/billing', icon: CreditCard },
+  { name: 'Integrations', href: '/settings/integrations', icon: Plug },
 ];
 
 export default function DashboardLayout({ children }) {
@@ -188,6 +199,33 @@ export default function DashboardLayout({ children }) {
                 </Link>
               );
             })}
+
+            {/* Settings Section */}
+            <div className="pt-4 mt-4 border-t border-slate-700/50">
+              <p className="px-3 mb-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Settings
+              </p>
+              {settingsNavigation.map((item) => {
+                const href = currentWorkspace ? `/${currentWorkspace.slug}${item.href}` : '#';
+                const isActive = pathname === href || pathname.startsWith(href + '/');
+                
+                return (
+                  <Link
+                    key={item.name}
+                    href={href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                      isActive
+                        ? 'bg-indigo-500/20 text-indigo-400'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                    }`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="text-sm font-medium">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
 
           {/* User Menu */}

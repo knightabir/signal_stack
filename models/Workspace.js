@@ -47,11 +47,16 @@ const WorkspaceSchema = new mongoose.Schema(
       enum: ['product', 'engineering', 'design', 'marketing', 'sales', 'support', 'founder', 'other'],
       default: null,
     },
-    // Billing - for Phase 5
+    // Billing
     plan: {
       type: String,
       enum: ['free', 'pro', 'business'],
       default: 'free',
+    },
+    billingInterval: {
+      type: String,
+      enum: ['monthly', 'yearly', null],
+      default: null,
     },
     stripeCustomerId: {
       type: String,
@@ -61,19 +66,46 @@ const WorkspaceSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    subscriptionStatus: {
+      type: String,
+      enum: ['active', 'canceled', 'past_due', 'trialing', null],
+      default: null,
+    },
+    planExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    // Widget token for embedded widget
+    widgetToken: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     // Settings
     settings: {
       // Branding
       logo: { type: String, default: null },
       primaryColor: { type: String, default: '#6366f1' },
-      // Widget settings - for Phase 4
+      // Widget settings
       widgetEnabled: { type: Boolean, default: false },
       widgetPosition: { type: String, enum: ['bottom-right', 'bottom-left'], default: 'bottom-right' },
       widgetTheme: { type: String, enum: ['light', 'dark', 'auto'], default: 'auto' },
+      widgetButtonText: { type: String, default: 'Feedback' },
       allowAnonymousFeedback: { type: Boolean, default: true },
       // Public pages
       publicRoadmap: { type: Boolean, default: true },
       publicChangelog: { type: Boolean, default: true },
+    },
+    // Integrations
+    integrations: {
+      // Slack
+      slackWebhookUrl: { type: String, default: null },
+      slackEvents: { type: [String], default: ['feedback.created', 'roadmap.shipped'] },
+      // Custom Webhooks
+      webhookUrl: { type: String, default: null },
+      webhookSecret: { type: String, default: null },
+      webhookEvents: { type: [String], default: ['feedback.created', 'feedback.voted', 'roadmap.shipped'] },
     },
   },
   {
