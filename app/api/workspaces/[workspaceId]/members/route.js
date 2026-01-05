@@ -152,13 +152,16 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Find user by email
-    const userToInvite = await User.findOne({ email: email.toLowerCase() });
+    // Find user by email or create new user
+    let userToInvite = await User.findOne({ email: email.toLowerCase() });
+    
     if (!userToInvite) {
-      return NextResponse.json(
-        { error: 'User not found. They must create an account first.' },
-        { status: 404 }
-      );
+      // Create a new user with just email (they'll set password when they sign up)
+      userToInvite = await User.create({
+        email: email.toLowerCase(),
+        name: email.split('@')[0], // Default name from email
+        password: null, // They'll set this when claiming account
+      });
     }
 
     // Check if already a member
@@ -206,6 +209,73 @@ export async function POST(request, { params }) {
       { error: 'Failed to invite member' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * PATCH /api/workspaces/[workspaceId]/members
+ * Update a member's role
+ */
+export async function PATCH(request, { params }) {
+  try {
+    const { workspaceId } = await params;
+
+    const rateLimitResponse = applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { memberId, role } = body;
+
+    if (!memberId || !role) {
+      return NextResponse.json({ error: 'memberId and role are required' }, { status: 400 });
+    }
+
+    if (!Object.values(ROLES).includes(role) || role === ROLES.OWNER) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    }
+
+    await dbConnect();
+
+    // Check permission
+    const currentMember = await WorkspaceMember.findOne({
+      workspaceId,
+      userId: session.user.id,
+    });
+
+    if (!currentMember || !currentMember.hasPermission('members:manage')) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+    }
+
+    // Find and update member
+    const memberToUpdate = await WorkspaceMember.findById(memberId);
+
+    if (!memberToUpdate || memberToUpdate.workspaceId.toString() !== workspaceId) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+    }
+
+    // Cannot change owner's role
+    if (memberToUpdate.role === ROLES.OWNER) {
+      return NextResponse.json({ error: 'Cannot change owner role' }, { status: 400 });
+    }
+
+    memberToUpdate.role = role;
+    await memberToUpdate.save();
+
+    return NextResponse.json({
+      message: 'Role updated',
+      member: {
+        id: memberToUpdate._id.toString(),
+        role: memberToUpdate.role,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating member:', error);
+    return NextResponse.json({ error: 'Failed to update member' }, { status: 500 });
   }
 }
 

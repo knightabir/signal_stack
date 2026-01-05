@@ -1,50 +1,8 @@
 import mongoose from 'mongoose';
+import { ROLES, PERMISSIONS, hasPermission, getPermissionsForRole } from '@/lib/rbac';
 
-// Role hierarchy: Owner > Admin > Viewer
-export const ROLES = {
-  OWNER: 'owner',
-  ADMIN: 'admin',
-  VIEWER: 'viewer',
-};
-
-// Permissions matrix
-export const PERMISSIONS = {
-  // Feedback permissions
-  'feedback:read': [ROLES.OWNER, ROLES.ADMIN, ROLES.VIEWER],
-  'feedback:create': [ROLES.OWNER, ROLES.ADMIN, ROLES.VIEWER],
-  'feedback:update': [ROLES.OWNER, ROLES.ADMIN],
-  'feedback:delete': [ROLES.OWNER, ROLES.ADMIN],
-  'feedback:moderate': [ROLES.OWNER, ROLES.ADMIN],
-  
-  // Roadmap permissions
-  'roadmap:read': [ROLES.OWNER, ROLES.ADMIN, ROLES.VIEWER],
-  'roadmap:update': [ROLES.OWNER, ROLES.ADMIN],
-  
-  // Changelog permissions
-  'changelog:read': [ROLES.OWNER, ROLES.ADMIN, ROLES.VIEWER],
-  'changelog:create': [ROLES.OWNER, ROLES.ADMIN],
-  'changelog:update': [ROLES.OWNER, ROLES.ADMIN],
-  'changelog:delete': [ROLES.OWNER, ROLES.ADMIN],
-  
-  // Workspace permissions
-  'workspace:read': [ROLES.OWNER, ROLES.ADMIN, ROLES.VIEWER],
-  'workspace:update': [ROLES.OWNER, ROLES.ADMIN],
-  'workspace:delete': [ROLES.OWNER],
-  
-  // Member permissions
-  'members:read': [ROLES.OWNER, ROLES.ADMIN],
-  'members:invite': [ROLES.OWNER, ROLES.ADMIN],
-  'members:remove': [ROLES.OWNER],
-  'members:update_role': [ROLES.OWNER],
-  
-  // Billing permissions
-  'billing:read': [ROLES.OWNER],
-  'billing:update': [ROLES.OWNER],
-  
-  // Settings permissions
-  'settings:read': [ROLES.OWNER, ROLES.ADMIN],
-  'settings:update': [ROLES.OWNER, ROLES.ADMIN],
-};
+// Re-export for backwards compatibility
+export { ROLES, PERMISSIONS };
 
 const WorkspaceMemberSchema = new mongoose.Schema(
   {
@@ -62,7 +20,7 @@ const WorkspaceMemberSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: Object.values(ROLES),
+      enum: Object.values(ROLES).filter(r => r !== 'public'), // Exclude public
       default: ROLES.VIEWER,
       required: true,
     },
@@ -88,20 +46,14 @@ const WorkspaceMemberSchema = new mongoose.Schema(
 // Compound index to ensure a user can only be a member once per workspace
 WorkspaceMemberSchema.index({ workspaceId: 1, userId: 1 }, { unique: true });
 
-// Check if user has permission
+// Check if member has permission (uses centralized RBAC)
 WorkspaceMemberSchema.methods.hasPermission = function (permission) {
-  const allowedRoles = PERMISSIONS[permission];
-  if (!allowedRoles) {
-    return false;
-  }
-  return allowedRoles.includes(this.role);
+  return hasPermission(this.role, permission);
 };
 
 // Get all permissions for this member
 WorkspaceMemberSchema.methods.getPermissions = function () {
-  return Object.keys(PERMISSIONS).filter((permission) =>
-    PERMISSIONS[permission].includes(this.role)
-  );
+  return getPermissionsForRole(this.role);
 };
 
 // Static method to get member with permissions

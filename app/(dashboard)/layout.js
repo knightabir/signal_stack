@@ -38,6 +38,7 @@ const settingsNavigation = [
   { name: 'Widget', href: '/settings/widget', icon: Code },
   { name: 'Billing', href: '/settings/billing', icon: CreditCard },
   { name: 'Integrations', href: '/settings/integrations', icon: Plug },
+  { name: 'Workspace', href: '/settings/workspace', icon: Building2 },
 ];
 
 export default function DashboardLayout({ children }) {
@@ -207,7 +208,11 @@ export default function DashboardLayout({ children }) {
               </p>
               {settingsNavigation.map((item) => {
                 const href = currentWorkspace ? `/${currentWorkspace.slug}${item.href}` : '#';
-                const isActive = pathname === href || pathname.startsWith(href + '/');
+                // For General (/settings), only active if exactly matches
+                // For others, active if pathname starts with the href
+                const isActive = item.href === '/settings' 
+                  ? pathname === href 
+                  : pathname === href || pathname.startsWith(href + '/');
                 
                 return (
                   <Link

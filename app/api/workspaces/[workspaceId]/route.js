@@ -179,7 +179,7 @@ export async function PATCH(request, { params }) {
 
 /**
  * DELETE /api/workspaces/[workspaceId]
- * Delete workspace (owner only)
+ * Delete workspace (owner only) - CASCADE DELETES ALL DATA
  */
 export async function DELETE(request, { params }) {
   try {
@@ -200,6 +200,15 @@ export async function DELETE(request, { params }) {
 
     await dbConnect();
 
+    // Find workspace first
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return NextResponse.json(
+        { error: 'Workspace not found' },
+        { status: 404 }
+      );
+    }
+
     // Check if user is owner
     const member = await WorkspaceMember.findOne({
       workspaceId,
@@ -208,8 +217,8 @@ export async function DELETE(request, { params }) {
 
     if (!member) {
       return NextResponse.json(
-        { error: 'Workspace not found' },
-        { status: 404 }
+        { error: 'Not a member of this workspace' },
+        { status: 403 }
       );
     }
 
@@ -220,20 +229,76 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Delete all members
-    await WorkspaceMember.deleteMany({ workspaceId });
+    // Require confirmation (check body for confirm flag)
+    const body = await request.json().catch(() => ({}));
+    if (!body.confirm) {
+      return NextResponse.json(
+        { error: 'Confirmation required. Send { confirm: true } to proceed.' },
+        { status: 400 }
+      );
+    }
 
-    // Delete workspace
+    // Import models for cascade deletion
+    const { Feedback, Vote, Comment, RoadmapItem, Announcement } = await import('@/models');
+
+    // Audit log before deletion
+    console.warn('[WORKSPACE DELETE]', {
+      workspaceId: workspace._id.toString(),
+      workspaceName: workspace.name,
+      deletedBy: session.user.id,
+      deletedAt: new Date().toISOString(),
+    });
+
+    // CASCADE DELETE ALL DATA
+    const deleteResults = {
+      feedback: 0,
+      votes: 0,
+      comments: 0,
+      roadmapItems: 0,
+      announcements: 0,
+      members: 0,
+    };
+
+    // 1. Delete all feedback and related votes/comments
+    const feedbackIds = await Feedback.find({ workspaceId }).distinct('_id');
+    if (feedbackIds.length > 0) {
+      const voteResult = await Vote.deleteMany({ feedbackId: { $in: feedbackIds } });
+      const commentResult = await Comment.deleteMany({ feedbackId: { $in: feedbackIds } });
+      deleteResults.votes = voteResult.deletedCount;
+      deleteResults.comments = commentResult.deletedCount;
+    }
+    const feedbackResult = await Feedback.deleteMany({ workspaceId });
+    deleteResults.feedback = feedbackResult.deletedCount;
+
+    // 2. Delete roadmap items
+    const roadmapResult = await RoadmapItem.deleteMany({ workspaceId });
+    deleteResults.roadmapItems = roadmapResult.deletedCount;
+
+    // 3. Delete announcements
+    const announcementResult = await Announcement.deleteMany({ workspaceId });
+    deleteResults.announcements = announcementResult.deletedCount;
+
+    // 4. Delete all members
+    const memberResult = await WorkspaceMember.deleteMany({ workspaceId });
+    deleteResults.members = memberResult.deletedCount;
+
+    // 5. Cancel Stripe subscription if exists
+    if (workspace.stripeSubscriptionId) {
+      try {
+        const { cancelSubscription } = await import('@/lib/stripe');
+        await cancelSubscription(workspace.stripeSubscriptionId);
+      } catch (stripeError) {
+        console.error('Failed to cancel Stripe subscription:', stripeError);
+        // Continue with deletion anyway
+      }
+    }
+
+    // 6. Finally delete the workspace
     await Workspace.findByIdAndDelete(workspaceId);
 
-    // TODO: In later phases, also delete:
-    // - Feedback items
-    // - Roadmap items
-    // - Changelog entries
-    // - Cancel Stripe subscription
-
     return NextResponse.json({
-      message: 'Workspace deleted successfully',
+      message: 'Workspace and all data deleted successfully',
+      deleted: deleteResults,
     });
   } catch (error) {
     console.error('Error deleting workspace:', error);

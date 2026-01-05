@@ -58,7 +58,7 @@ const PLANS = {
   },
 };
 
-export default function BillingSettings({ workspace, canEdit }) {
+export default function BillingSettings({ workspace, canManageBilling, isOwner }) {
   const searchParams = useSearchParams();
   const success = searchParams.get('success');
   const canceled = searchParams.get('canceled');
@@ -67,7 +67,7 @@ export default function BillingSettings({ workspace, canEdit }) {
   const [interval, setInterval] = useState('monthly');
 
   const handleUpgrade = async (plan) => {
-    if (!canEdit || plan === 'free') return;
+    if (!canManageBilling || plan === 'free') return;
 
     setIsLoading(plan);
     try {
@@ -165,7 +165,7 @@ export default function BillingSettings({ workspace, canEdit }) {
               <p className="text-sm text-red-400 mt-1">⚠️ Payment past due</p>
             )}
           </div>
-          {workspace.hasStripeCustomer && canEdit && (
+          {workspace.hasStripeCustomer && canManageBilling && (
             <Button
               onClick={handleManageBilling}
               disabled={isLoading === 'portal'}
@@ -267,7 +267,7 @@ export default function BillingSettings({ workspace, canEdit }) {
                 ))}
               </ul>
 
-              {canEdit && (
+              {canManageBilling ? (
                 <Button
                   onClick={() => handleUpgrade(key)}
                   disabled={isCurrent || isLoading === key || key === 'free'}
@@ -288,6 +288,10 @@ export default function BillingSettings({ workspace, canEdit }) {
                     'Upgrade'
                   )}
                 </Button>
+              ) : (
+                <p className="text-xs text-center text-slate-500">
+                  Contact workspace owner to manage billing
+                </p>
               )}
             </div>
           );

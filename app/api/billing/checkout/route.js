@@ -6,10 +6,12 @@ import { Workspace, WorkspaceMember } from '@/models';
 import { createCheckoutSession } from '@/lib/stripe';
 import { PLANS } from '@/lib/plans';
 import { applyRateLimit } from '@/lib/rateLimit';
+import { ACTIONS, hasPermission, logAdminAction } from '@/lib/rbac';
 
 /**
  * POST /api/billing/checkout
  * Create Stripe checkout session
+ * PERMISSION: BILLING_UPDATE (Owner only)
  */
 export async function POST(request) {
   try {
@@ -48,15 +50,18 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
     }
 
-    // Check permission
+    // RBAC: Check billing permission (Owner only)
     const member = await WorkspaceMember.findOne({
       workspaceId: workspace._id,
       userId: session.user.id,
     });
 
-    if (!member || !member.hasPermission('settings:update')) {
-      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+    if (!member || !hasPermission(member.role, ACTIONS.BILLING_UPDATE)) {
+      return NextResponse.json({ error: 'Permission denied: Only workspace owner can manage billing' }, { status: 403 });
     }
+
+    // Audit log
+    logAdminAction(session.user.id, workspace._id.toString(), ACTIONS.BILLING_UPDATE, { plan, interval });
 
     // Get price ID
     const planConfig = PLANS[plan];

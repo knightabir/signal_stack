@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Loader2,
   Copy,
@@ -10,10 +11,16 @@ import {
   ExternalLink,
   Settings,
   ArrowLeft,
+  Lock,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function WidgetSettings({ workspace, canEdit }) {
+export default function WidgetSettings({ workspace, canEdit, featureAccess }) {
+  const router = useRouter();
+  const widgetFeature = featureAccess?.widget;
+  const isLocked = widgetFeature?.isLocked;
+
   const [settings, setSettings] = useState({
     enabled: false,
     position: 'bottom-right',
@@ -50,6 +57,11 @@ export default function WidgetSettings({ workspace, canEdit }) {
   };
 
   const handleSave = async () => {
+    if (isLocked) {
+      router.push(`/${workspace.slug}/settings/billing`);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const res = await fetch(`/api/workspaces/${workspace.id}/widget`, {
@@ -61,6 +73,12 @@ export default function WidgetSettings({ workspace, canEdit }) {
       if (res.ok) {
         const data = await res.json();
         setSettings((prev) => ({ ...prev, ...data.settings }));
+      } else if (res.status === 403) {
+        const data = await res.json();
+        if (data.code === 'UPGRADE_REQUIRED') {
+          alert(`This feature requires the ${data.requiredPlan} plan. Click OK to upgrade.`);
+          router.push(`/${workspace.slug}/settings/billing`);
+        }
       }
     } catch (error) {
       console.error('Failed to save:', error);
@@ -118,11 +136,45 @@ export default function WidgetSettings({ workspace, canEdit }) {
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Widget Settings</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-white">Widget Settings</h1>
+            {isLocked && widgetFeature.upgradeBadge && (
+              <button
+                onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
+              >
+                <Zap className="w-3 h-3" />
+                {widgetFeature.upgradeBadge.text}
+              </button>
+            )}
+          </div>
           <p className="text-slate-400">Embed feedback collection on your website</p>
         </div>
       </div>
+
+      {/* Upgrade Banner for Locked Feature */}
+      {isLocked && (
+        <div
+          onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
+          className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 rounded-xl p-5 cursor-pointer hover:border-amber-500/50 transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-500/20 rounded-xl">
+              <Lock className="w-6 h-6 text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-400">Upgrade to Pro for Widget Access</h3>
+              <p className="text-sm text-amber-400/70 mt-0.5">
+                Embed a beautiful feedback widget directly in your product. Available on Pro and Business plans.
+              </p>
+            </div>
+            <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white group-hover:scale-105 transition-transform">
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Enable Widget */}
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
@@ -177,15 +229,27 @@ export default function WidgetSettings({ workspace, canEdit }) {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-slate-400 mb-4">Generate a token to get your embed code</p>
+            <p className="text-slate-400 mb-4">
+              {isLocked 
+                ? 'Upgrade to Pro to get your embed code'
+                : 'Generate a token to get your embed code'
+              }
+            </p>
             {canEdit && (
               <Button
-                onClick={handleGenerateToken}
+                onClick={isLocked ? () => router.push(`/${workspace.slug}/settings/billing`) : handleGenerateToken}
                 disabled={isGenerating}
-                className="bg-gradient-to-r from-indigo-500 to-purple-600"
+                className={isLocked 
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700'
+                  : 'bg-gradient-to-r from-indigo-500 to-purple-600'
+                }
               >
-                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Generate Embed Code
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : isLocked ? (
+                  <Lock className="w-4 h-4 mr-2" />
+                ) : null}
+                {isLocked ? 'Upgrade to Pro' : 'Generate Embed Code'}
               </Button>
             )}
           </div>

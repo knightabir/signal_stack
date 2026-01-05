@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Loader2,
   ArrowLeft,
@@ -13,6 +14,8 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
+  Lock,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,7 +25,11 @@ const EVENTS = [
   { id: 'roadmap.shipped', label: 'Roadmap item shipped' },
 ];
 
-export default function IntegrationsSettings({ workspace, canEdit }) {
+export default function IntegrationsSettings({ workspace, canEdit, featureAccess }) {
+  const router = useRouter();
+  const integrationsFeature = featureAccess?.integrations;
+  const isLocked = integrationsFeature?.isLocked;
+
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -56,6 +63,11 @@ export default function IntegrationsSettings({ workspace, canEdit }) {
   };
 
   const handleSave = async () => {
+    if (isLocked) {
+      router.push(`/${workspace.slug}/settings/billing`);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const res = await fetch(`/api/workspaces/${workspace.id}/integrations`, {
@@ -72,6 +84,11 @@ export default function IntegrationsSettings({ workspace, canEdit }) {
       if (res.ok) {
         fetchIntegrations();
         setSlackUrl('');
+      } else if (res.status === 403) {
+        const data = await res.json();
+        if (data.code === 'UPGRADE_REQUIRED') {
+          router.push(`/${workspace.slug}/settings/billing`);
+        }
       }
     } catch (error) {
       console.error('Failed to save:', error);
@@ -81,6 +98,11 @@ export default function IntegrationsSettings({ workspace, canEdit }) {
   };
 
   const handleRegenerateSecret = async () => {
+    if (isLocked) {
+      router.push(`/${workspace.slug}/settings/billing`);
+      return;
+    }
+
     if (!confirm('Regenerate webhook secret? Current integrations using the old secret will break.')) return;
 
     try {
@@ -138,11 +160,46 @@ export default function IntegrationsSettings({ workspace, canEdit }) {
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Integrations</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-white">Integrations</h1>
+            {isLocked && integrationsFeature.upgradeBadge && (
+              <button
+                onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
+              >
+                <Zap className="w-3 h-3" />
+                {integrationsFeature.upgradeBadge.text}
+              </button>
+            )}
+          </div>
           <p className="text-slate-400">Connect with external services</p>
         </div>
       </div>
+
+      {/* Upgrade Banner for Locked Feature */}
+      {isLocked && (
+        <div
+          onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
+          className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 rounded-xl p-5 cursor-pointer hover:border-amber-500/50 transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-500/20 rounded-xl">
+              <Lock className="w-6 h-6 text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-400">Upgrade to Pro for Integrations</h3>
+              <p className="text-sm text-amber-400/70 mt-0.5">
+                Connect Slack, custom webhooks, and GitHub. Available on Pro and Business plans.
+              </p>
+            </div>
+            <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white group-hover:scale-105 transition-transform">
+              <Lock className="w-4 h-4 mr-2" />
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Slack Integration */}
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">

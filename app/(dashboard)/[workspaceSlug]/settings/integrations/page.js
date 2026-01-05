@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import { Workspace, WorkspaceMember } from '@/models';
 import IntegrationsSettings from './IntegrationsSettings';
+import { getFeatureAccessMap } from '@/lib/featureGating';
 
 export const metadata = {
   title: 'Integrations',
@@ -34,14 +35,21 @@ export default async function IntegrationsPage({ params }) {
     redirect('/');
   }
 
+  // Get feature access for current plan
+  const currentPlan = workspace.plan || 'free';
+  const featureAccess = getFeatureAccessMap(currentPlan);
+
   return (
     <IntegrationsSettings
       workspace={{
         id: workspace._id.toString(),
         name: workspace.name,
         slug: workspace.slug,
+        plan: currentPlan,
       }}
       canEdit={member.hasPermission('settings:update')}
+      featureAccess={featureAccess}
     />
   );
 }
+

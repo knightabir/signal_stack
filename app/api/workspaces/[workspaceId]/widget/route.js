@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import { Workspace, WorkspaceMember } from '@/models';
 import { applyRateLimit } from '@/lib/rateLimit';
+import { requireFeature } from '@/lib/featureMiddleware';
 import crypto from 'crypto';
 
 /**
@@ -98,6 +99,12 @@ export async function PATCH(request, { params }) {
 
     if (!member || !member.hasPermission('settings:update')) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+    }
+
+    // Feature gate: Widget requires Pro plan
+    const featureCheck = await requireFeature(request, workspace._id.toString(), 'widget');
+    if (!featureCheck.allowed) {
+      return featureCheck.response;
     }
 
     const body = await request.json();
