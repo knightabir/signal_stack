@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Prevent trailing slash redirects for API routes (fixes Stripe webhook 307)
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;

@@ -82,6 +82,7 @@ export async function POST(request) {
       workspaceId: workspace._id.toString(),
       workspaceName: workspace.name,
       customerId: workspace.stripeCustomerId,
+      customerEmail: session.user.email, // Pre-fill email for new customers
       priceId,
       successUrl: `${baseUrl}/${workspace.slug}/settings/billing?success=true`,
       cancelUrl: `${baseUrl}/${workspace.slug}/settings/billing?canceled=true`,

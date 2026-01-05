@@ -21,6 +21,7 @@ const publicPatterns = [
 const publicApiPatterns = [
   /^\/api\/public\//,
   /^\/api\/widget\//,
+  /^\/api\/billing\/webhook$/, // Stripe webhook - no auth required
 ];
 
 // Static files and Next.js internals
