@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { Vote, Feedback, Workspace } from '@/models';
-import { applyRateLimit, getClientIp } from '@/lib/rateLimit';
+import { applyRateLimit, getClientIP } from '@/lib/rateLimit';
 
 /**
  * POST /api/widget/[token]/vote
@@ -36,7 +36,7 @@ export async function POST(request, { params }) {
     }
 
     // Get IP for anonymous voting
-    const ipAddress = getClientIp(request);
+    const ipAddress = getClientIP(request);
 
     // Toggle vote
     const result = await Vote.toggleVote(feedbackId, null, ipAddress);

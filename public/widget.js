@@ -7,6 +7,7 @@
     return scripts[scripts.length - 1];
   })();
 
+  console.log("i am loading widget.js")
   var token = script.getAttribute('data-token');
   var position = script.getAttribute('data-position') || 'bottom-right';
   var buttonText = script.getAttribute('data-button-text') || 'Feedback';

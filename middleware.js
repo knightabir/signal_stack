@@ -7,6 +7,7 @@ const publicRoutes = [
   '/sign-in',
   '/sign-up',
   '/api/auth',
+  '/widget.js',
 ];
 
 // Routes that are always public (like public feedback boards)
@@ -15,6 +16,7 @@ const publicPatterns = [
   /^\/p\/[^/]+\/feedback$/,
   /^\/p\/[^/]+\/roadmap$/,
   /^\/p\/[^/]+\/changelog$/,
+  /^\/widget\//,
 ];
 
 // API routes that allow anonymous access
