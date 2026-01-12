@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { Workspace, Feedback, Vote } from '@/models';
-import { applyRateLimit } from '@/lib/rateLimit';
+import { applyRateLimit, getClientIP } from '@/lib/rateLimit';
 
 /**
  * GET /api/widget/[token]
@@ -22,20 +22,83 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Widget not found or disabled' }, { status: 404 });
     }
 
-    // Get feedback for this workspace
-    const feedback = await Feedback.find({
+    // 1. Feedback Tab: Status 'new', sorted by votes (Top 30)
+    // Keep 'new' status feedback as the main feedback pool
+    const feedbackItems = await Feedback.find({
       workspaceId: workspace._id,
       isHidden: false,
       mergedIntoId: null,
+      status: 'new'
     })
-      .select('title description status voteCount commentCount createdAt authorName isAnonymous')
-      .sort({ voteCount: -1 })
-      .limit(50)
-      .lean();
+    .select('title description status voteCount commentCount createdAt authorName isAnonymous')
+    .sort({ voteCount: -1 })
+    .limit(30)
+    .lean();
+
+    // 2. Roadmap Tab: Use RoadmapItem model
+    const roadmapItemsRaw = await import('@/models/RoadmapItem').then(m => m.default.find({
+      workspaceId: workspace._id
+    }).sort({ order: 1, createdAt: -1 }).lean());
+    
+    const roadmap = {
+        planned: roadmapItemsRaw.filter(i => i.stage === 'planned').map(i => ({ 
+            id: i._id.toString(), 
+            title: i.title, 
+            description: i.description, 
+            stage: i.stage,
+            order: i.order,
+            createdAt: i.createdAt
+        })),
+        in_progress: roadmapItemsRaw.filter(i => i.stage === 'in_progress').map(i => ({ 
+            id: i._id.toString(), 
+            title: i.title, 
+            description: i.description, 
+            stage: i.stage,
+            order: i.order,
+            createdAt: i.createdAt
+        })),
+        shipped: roadmapItemsRaw.filter(i => i.stage === 'shipped').map(i => ({ 
+            id: i._id.toString(), 
+            title: i.title, 
+            description: i.description, 
+            stage: i.stage,
+            order: i.order,
+            createdAt: i.createdAt
+        }))
+    };
+    
+    // 3. Changelog Tab: Use Announcement model
+    const changelogItemsRaw = await import('@/models/Announcement').then(m => m.default.find({
+      workspaceId: workspace._id,
+      isPublished: true
+    })
+    .sort({ publishedAt: -1, createdAt: -1 })
+    .limit(20)
+    .lean());
+
+    const changelog = changelogItemsRaw.map(i => ({
+        id: i._id.toString(),
+        title: i.title,
+        description: i.content, // Using content as description wrapper
+        slug: i.slug,
+        publishedAt: i.publishedAt || i.createdAt,
+        createdAt: i.createdAt
+    }));
+
+    // Check for user votes (by IP) - Mainly for feedback items
+    const ipAddress = getClientIP(request);
+    const feedbackIds = feedbackItems.map(f => f._id);
+    const userVotes = await Vote.find({
+        feedbackId: { $in: feedbackIds },
+        ipAddress: ipAddress
+    }).select('feedbackId').lean();
+
+    const votedFeedbackIds = new Set(userVotes.map(v => v.feedbackId.toString()));
 
     return NextResponse.json({
       workspace: {
         id: workspace._id.toString(),
+        // ... settings
         name: workspace.name,
         slug: workspace.slug,
         settings: {
@@ -46,7 +109,7 @@ export async function GET(request, { params }) {
           primaryColor: workspace.settings.primaryColor,
         },
       },
-      feedback: feedback.map((f) => ({
+      feedback: feedbackItems.map((f) => ({
         id: f._id.toString(),
         title: f.title,
         description: f.description,
@@ -55,7 +118,10 @@ export async function GET(request, { params }) {
         commentCount: f.commentCount,
         author: f.isAnonymous ? 'Anonymous' : f.authorName || 'Guest',
         createdAt: f.createdAt,
+        hasVoted: votedFeedbackIds.has(f._id.toString())
       })),
+      roadmap,
+      changelog
     });
   } catch (error) {
     console.error('Error fetching widget data:', error);

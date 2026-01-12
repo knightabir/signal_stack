@@ -5,6 +5,9 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail, Lock, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function SignUpPage() {
@@ -95,12 +98,11 @@ export default function SignUpPage() {
   ];
 
   return (
-    <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
+    <Card className="w-full border-slate-700/50 bg-slate-800/50 backdrop-blur-xl shadow-2xl">
+      <CardHeader className="text-center">
+        <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
           <svg
-            className="w-6 h-6 text-white"
+            className="h-6 w-6 text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -113,144 +115,137 @@ export default function SignUpPage() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-white">Create your account</h1>
-        <p className="text-slate-400 mt-2">Start collecting feedback in minutes</p>
-      </div>
-
-      {/* Error Alert */}
-      {error && (
-        <div className="flex items-center gap-2 p-3 mb-6 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
-            Full name
-          </label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-            <input
-              id="name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              placeholder="John Doe"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-            Email address
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              placeholder="you@example.com"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-            Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
-            Confirm password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
-
-        {/* Password Requirements */}
-        {formData.password.length > 0 && (
-          <div className="space-y-2">
-            {passwordRequirements.map((req, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm">
-                <CheckCircle2
-                  className={`w-4 h-4 ${
-                    req.met ? 'text-green-400' : 'text-slate-600'
-                  }`}
-                />
-                <span className={req.met ? 'text-green-400' : 'text-slate-500'}>
-                  {req.text}
-                </span>
-              </div>
-            ))}
-          </div>
+        <CardTitle className="text-2xl font-bold text-white">Create your account</CardTitle>
+        <CardDescription className="text-slate-400">Start collecting feedback in minutes</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Error Alert */}
+        {error && (
+            <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{error}</span>
+            </div>
         )}
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-indigo-500/25"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            'Create account'
-          )}
-        </Button>
-      </form>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+                <Label htmlFor="name">Full name</Label>
+                <div className="relative">
+                    <User className="absolute left-3 top-2.5 h-5 w-5 text-slate-500" />
+                    <Input
+                        id="name"
+                        name="name"
+                        type="text"
+                        autoComplete="name"
+                        required
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500"
+                        placeholder="John Doe"
+                    />
+                </div>
+            </div>
 
-      {/* Footer */}
-      <p className="text-center text-slate-400 mt-6 text-sm">
-        Already have an account?{' '}
-        <Link
-          href="/sign-in"
-          className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-        >
-          Sign in
-        </Link>
-      </p>
-    </div>
+            <div className="space-y-2">
+                <Label htmlFor="email">Email address</Label>
+                <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-500" />
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500"
+                        placeholder="you@example.com"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-500" />
+                    <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500"
+                        placeholder="••••••••"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <div className="relative">
+                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-500" />
+                    <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500"
+                        placeholder="••••••••"
+                    />
+                </div>
+            </div>
+
+            {/* Password Requirements */}
+            {formData.password.length > 0 && (
+            <div className="space-y-2">
+                {passwordRequirements.map((req, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                    <CheckCircle2
+                    className={`h-4 w-4 ${
+                        req.met ? 'text-green-400' : 'text-slate-600'
+                    }`}
+                    />
+                    <span className={req.met ? 'text-green-400' : 'text-slate-500'}>
+                    {req.text}
+                    </span>
+                </div>
+                ))}
+            </div>
+            )}
+
+            <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 font-medium text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-600 hover:to-purple-700"
+            >
+            {isLoading ? (
+                <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating account...
+                </>
+            ) : (
+                'Create account'
+            )}
+            </Button>
+        </form>
+      </CardContent>
+      <CardFooter>
+        <p className="w-full text-center text-sm text-slate-400">
+            Already have an account?{' '}
+            <Link
+            href="/sign-in"
+            className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
+            Sign in
+            </Link>
+        </p>
+      </CardFooter>
+    </Card>
   );
 }

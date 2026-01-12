@@ -1,173 +1,131 @@
 import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/db';
+import { Workspace, Feedback, Vote } from '@/models';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import dbConnect from '@/lib/db';
-import { Workspace, Feedback, Vote, RoadmapItem, WorkspaceMember } from '@/models';
-import { applyRateLimit } from '@/lib/rateLimit';
+import { WorkspaceMember } from '@/models';
+import { startOfDay, subDays, format } from 'date-fns';
 
-/**
- * GET /api/workspaces/[workspaceId]/analytics
- * Get workspace analytics and metrics
- */
 export async function GET(request, { params }) {
   try {
     const { workspaceId } = await params;
-    const { searchParams } = new URL(request.url);
-
-    const rateLimitResponse = applyRateLimit(request, 'api');
-    if (rateLimitResponse) return rateLimitResponse;
-
     const session = await getServerSession(authOptions);
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await dbConnect();
 
-    // Find workspace
-    let workspace = await Workspace.findById(workspaceId).lean();
-    if (!workspace) {
-      workspace = await Workspace.findOne({ slug: workspaceId }).lean();
-    }
-
-    if (!workspace) {
-      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
-    }
-
-    // Check membership
-    const member = await WorkspaceMember.findOne({
-      workspaceId: workspace._id,
+    // Verify membership
+    const isMember = await WorkspaceMember.exists({
+      workspaceId,
       userId: session.user.id,
     });
 
-    if (!member) {
-      return NextResponse.json({ error: 'Not a member' }, { status: 403 });
+    if (!isMember) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Time period filter
-    const period = searchParams.get('period') || '30d';
-    const periodDays = period === '7d' ? 7 : period === '90d' ? 90 : 30;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - periodDays);
-
-    // Get all metrics in parallel
-    const [
-      totalFeedback,
-      statusBreakdown,
-      topVotedFeedback,
-      recentVotes,
-      roadmapStats,
-      feedbackTrend,
-    ] = await Promise.all([
-      // Total feedback count
-      Feedback.countDocuments({ workspaceId: workspace._id }),
-
-      // Status breakdown
-      Feedback.aggregate([
-        { $match: { workspaceId: workspace._id, isHidden: false } },
-        { $group: { _id: '$status', count: { $sum: 1 } } },
-      ]),
-
-      // Top voted feedback
-      Feedback.find({ workspaceId: workspace._id, isHidden: false })
-        .sort({ voteCount: -1 })
-        .limit(5)
-        .select('title voteCount commentCount status createdAt')
-        .lean(),
-
-      // Recent votes (for trend)
-      Vote.aggregate([
-        {
-          $lookup: {
-            from: 'feedbacks',
-            localField: 'feedbackId',
-            foreignField: '_id',
-            as: 'feedback',
-          },
+    // 1. Total Metrics
+    const totalFeedback = await Feedback.countDocuments({ workspaceId });
+    const votesResult = await Vote.aggregate([
+        { 
+            $lookup: {
+                from: 'feedbacks',
+                localField: 'feedbackId',
+                foreignField: '_id',
+                as: 'feedback'
+            }
         },
         { $unwind: '$feedback' },
-        { $match: { 'feedback.workspaceId': workspace._id, createdAt: { $gte: startDate } } },
-        {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            count: { $sum: 1 },
-          },
+        { 
+            $match: { 
+                'feedback.workspaceId': new mongoose.Types.ObjectId(workspaceId) 
+            } 
         },
-        { $sort: { _id: 1 } },
-      ]),
+        { $count: 'total' }
+    ]);
+    // Since votes might not directly link to workspace except through feedback, 
+    // simpler to sum voteCount on Feedback for now if we trust it, or aggreg like above.
+    // Actually, `Feedback` model has `voteCount` which is denormalized. Let's use that for speed.
+    
+    const voteSumResult = await Feedback.aggregate([
+        { $match: { workspaceId: new mongoose.Types.ObjectId(workspaceId) } },
+        { $group: { _id: null, totalVotes: { $sum: '$voteCount' } } }
+    ]);
+    const totalVotes = voteSumResult.length > 0 ? voteSumResult[0].totalVotes : 0;
 
-      // Roadmap stats
-      RoadmapItem.aggregate([
-        { $match: { workspaceId: workspace._id } },
-        { $group: { _id: '$stage', count: { $sum: 1 } } },
-      ]),
+    const roadmapItems = await Feedback.countDocuments({ 
+        workspaceId,
+        status: { $in: ['planned', 'in-progress'] }
+    });
 
-      // Feedback trend (new feedback per day)
-      Feedback.aggregate([
-        { $match: { workspaceId: workspace._id, createdAt: { $gte: startDate } } },
-        {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            count: { $sum: 1 },
-          },
+    const doneItems = await Feedback.countDocuments({
+        workspaceId,
+        status: 'done'
+    });
+
+    // 2. Chart Data (Last 30 days feedback volume)
+    const thirtyDaysAgo = startOfDay(subDays(new Date(), 30));
+    
+    // Aggregate feedback creation by day
+    const feedbackTrend = await Feedback.aggregate([
+        { 
+            $match: { 
+                workspaceId: new mongoose.Types.ObjectId(workspaceId),
+                createdAt: { $gte: thirtyDaysAgo }
+            } 
         },
-        { $sort: { _id: 1 } },
-      ]),
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                count: { $sum: 1 }
+            }
+        },
+        { $sort: { _id: 1 } }
     ]);
 
-    // Calculate feedback-to-ship time (average days from created to completed)
-    const shippedFeedback = await Feedback.find({
-      workspaceId: workspace._id,
-      status: 'completed',
-    }).select('createdAt updatedAt').lean();
-
-    let avgShipTime = null;
-    if (shippedFeedback.length > 0) {
-      const totalDays = shippedFeedback.reduce((sum, f) => {
-        const days = (new Date(f.updatedAt) - new Date(f.createdAt)) / (1000 * 60 * 60 * 24);
-        return sum + days;
-      }, 0);
-      avgShipTime = Math.round(totalDays / shippedFeedback.length);
+    // Fill in missing days
+    const chartData = [];
+    for (let i = 0; i < 30; i++) {
+        const date = subDays(new Date(), i);
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const dayData = feedbackTrend.find(d => d._id === dateStr);
+        chartData.unshift({
+            date: format(date, 'MMM dd'),
+            start: dayData ? dayData.count : 0
+        });
     }
 
-    // Calculate total votes
-    const totalVotes = topVotedFeedback.reduce((sum, f) => sum + f.voteCount, 0);
+    // 3. Recent Activity (Latest 5 feedback)
+    const recentFeedback = await Feedback.find({ workspaceId })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('title authorName createdAt status')
+        .lean();
 
-    // Format response
     return NextResponse.json({
-      overview: {
-        totalFeedback,
-        totalVotes,
-        avgShipTime,
-        period: periodDays,
-      },
-      statusBreakdown: statusBreakdown.map((s) => ({
-        status: s._id,
-        count: s.count,
-      })),
-      roadmapBreakdown: roadmapStats.map((r) => ({
-        stage: r._id,
-        count: r.count,
-      })),
-      topVoted: topVotedFeedback.map((f) => ({
-        id: f._id.toString(),
-        title: f.title,
-        voteCount: f.voteCount,
-        commentCount: f.commentCount,
-        status: f.status,
-        createdAt: f.createdAt,
-      })),
-      voteTrend: recentVotes.map((v) => ({
-        date: v._id,
-        votes: v.count,
-      })),
-      feedbackTrend: feedbackTrend.map((f) => ({
-        date: f._id,
-        count: f.count,
-      })),
+        stats: {
+            totalFeedback,
+            totalVotes,
+            roadmapItems,
+            doneItems
+        },
+        chartData,
+        recentActivity: recentFeedback.map(f => ({
+            id: f._id.toString(),
+            title: f.title,
+            author: f.authorName || 'Anonymous',
+            date: f.createdAt,
+            status: f.status
+        }))
     });
+
   } catch (error) {
-    console.error('Error fetching analytics:', error);
-    return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
+    console.error('Analytics API Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+import mongoose from 'mongoose';

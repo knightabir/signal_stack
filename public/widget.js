@@ -54,47 +54,32 @@
     }
     .signalstack-widget-iframe-container {
       position: fixed;
-      ${position.includes('right') ? 'right: 20px;' : 'left: 20px;'}
-      bottom: 80px;
-      z-index: 99999;
-      width: 380px;
-      height: 500px;
-      max-width: calc(100vw - 40px);
-      max-height: calc(100vh - 120px);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 999999;
+      width: 800px;
+      height: 100vh;
+      max-width: 100vw;
+      border: none;
+      background: #fff;
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
       display: none;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .signalstack-widget-iframe-container.open {
       display: block;
-      animation: signalstack-slide-up 0.3s ease-out;
+      transform: translateX(0);
     }
     .signalstack-widget-iframe {
       width: 100%;
       height: 100%;
       border: none;
     }
-    @keyframes signalstack-slide-up {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
     @media (max-width: 480px) {
       .signalstack-widget-iframe-container {
-        width: calc(100vw - 20px);
-        ${position.includes('right') ? 'right: 10px;' : 'left: 10px;'}
-        bottom: 70px;
-        height: 60vh;
-      }
-      .signalstack-widget-button {
-        ${position.includes('right') ? 'right: 10px;' : 'left: 10px;'}
-        bottom: 10px;
+        width: 100%;
       }
     }
   `;
@@ -145,6 +130,14 @@
   // Close when clicking outside
   document.addEventListener('click', function(e) {
     if (isOpen && !button.contains(e.target) && !iframeContainer.contains(e.target)) {
+      isOpen = false;
+      iframeContainer.classList.remove('open');
+    }
+  });
+
+  // Listen for close message from iframe
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'signalstack-close') {
       isOpen = false;
       iframeContainer.classList.remove('open');
     }

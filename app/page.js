@@ -4,6 +4,8 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import { WorkspaceMember } from '@/models';
 import Link from 'next/link';
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
@@ -37,18 +39,16 @@ export default async function HomePage() {
                 <span className="text-xl font-bold text-white">Signalstack</span>
               </div>
               <div className="flex items-center gap-4">
-                <Link
-                  href="/sign-in"
-                  className="text-slate-300 hover:text-white transition-colors"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  Get Started
-                </Link>
+                <Button asChild variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10">
+                  <Link href="/sign-in">
+                    Sign in
+                  </Link>
+                </Button>
+                <Button asChild className="bg-indigo-500 hover:bg-indigo-600 text-white">
+                  <Link href="/sign-up">
+                    Get Started
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -68,58 +68,68 @@ export default async function HomePage() {
                 Collect feedback, build public roadmaps, and keep your users in the loop with beautiful changelogs.
               </p>
               <div className="flex items-center justify-center gap-4">
-                <Link
-                  href="/sign-up"
-                  className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium rounded-lg transition-all shadow-lg shadow-indigo-500/25"
-                >
-                  Start for free
-                </Link>
-                <Link
-                  href="#features"
-                  className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 transition-colors"
-                >
-                  Learn more
-                </Link>
+                <Button asChild size="lg" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/25 border-0">
+                  <Link href="/sign-up">
+                    Start for free
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700">
+                  <Link href="#features">
+                    Learn more
+                  </Link>
+                </Button>
               </div>
             </div>
 
             {/* Feature Cards */}
             <div id="features" className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-                <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Collect Feedback</h3>
-                <p className="text-slate-400">
-                  Let users submit and vote on ideas. Understand what matters most to your customers.
-                </p>
-              </div>
+              <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700/50">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <CardTitle className="text-white">Collect Feedback</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-slate-400 text-base">
+                    Let users submit and vote on ideas. Understand what matters most to your customers.
+                  </CardDescription>
+                </CardContent>
+              </Card>
 
-              <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-                <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Public Roadmap</h3>
-                <p className="text-slate-400">
-                  Share your product direction transparently. Build trust with a beautiful public roadmap.
-                </p>
-              </div>
+              <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700/50">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                  </div>
+                  <CardTitle className="text-white">Public Roadmap</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-slate-400 text-base">
+                    Share your product direction transparently. Build trust with a beautiful public roadmap.
+                  </CardDescription>
+                </CardContent>
+              </Card>
 
-              <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Changelog</h3>
-                <p className="text-slate-400">
-                  Announce new features and updates. Keep users engaged and informed about your progress.
-                </p>
-              </div>
+              <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700/50">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                  </div>
+                  <CardTitle className="text-white">Changelog</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-slate-400 text-base">
+                    Announce new features and updates. Keep users engaged and informed about your progress.
+                  </CardDescription>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </main>
