@@ -59,7 +59,7 @@ function SignInForm() {
   return (
     <Card className="w-full border-slate-700/50 bg-slate-800/50 backdrop-blur-xl shadow-2xl">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
+        <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-purple-600">
           <svg
             className="h-6 w-6 text-white"
             fill="none"
@@ -81,7 +81,7 @@ function SignInForm() {
         {/* Error Alert */}
         {error && (
             <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
             </div>
         )}
@@ -126,7 +126,7 @@ function SignInForm() {
             <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 font-medium text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-600 hover:to-purple-700"
+            className="w-full bg-linear-to-r from-indigo-500 to-purple-600 font-medium text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-600 hover:to-purple-700"
             >
             {isLoading ? (
                 <>
