@@ -111,12 +111,12 @@ export function FeedbackTab({ data, token }) {
             variant="ghost"
             size="sm"
             onClick={() => setIsCreating(false)}
-            className="hover:bg-slate-100 dark:hover:bg-slate-800 -ml-2"
+            className="m-2 text-slate-700 hover:text-black"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <h3 className="font-semibold">Submit Feedback</h3>
+          <h3 className="font-semibold text-black">Submit Feedback</h3>
         </div>
 
         <form
@@ -191,13 +191,13 @@ export function FeedbackTab({ data, token }) {
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex items-center justify-between shrink-0">
-        <h3 className="font-medium text-slate-500 text-sm">
+        <h3 className="font-medium text-sm text-black">
           {feedbackList.length} Posts
         </h3>
         <Button
           size="sm"
           onClick={() => setIsCreating(true)}
-          className="text-white shadow-sm"
+          className="shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white"
         >
           + Create New
         </Button>
@@ -206,22 +206,25 @@ export function FeedbackTab({ data, token }) {
       <ScrollArea className="flex-1 -mx-4 px-4">
         <div className="space-y-3 pb-4">
           {feedbackList.map((item) => (
-            <Card key={item.id} className="group border-slate-200">
+            <Card
+              key={item.id}
+              className="group border-slate-300 hover:border-indigo-400 hover:shadow-md transition-all bg-white"
+            >
               <CardContent className="p-4 flex gap-3">
                 <button
                   className={cn(
-                    "h-12 w-10 shrink-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all duration-200",
-                    "hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0",
+                    "h-12 w-10 shrink-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 transition-all duration-200",
+                    "hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
                     item.hasVoted
-                      ? "border-indigo-600 bg-indigo-600 text-white shadow-indigo-200 dark:shadow-none"
-                      : "border-slate-200 bg-white dark:bg-slate-950 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+                      ? "border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                      : "border-slate-400 bg-white text-slate-800 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50"
                   )}
                   onClick={() => handleVote(item.id)}
                   disabled={item.hasVoted && false}
                 >
                   <ChevronUp
                     className={cn(
-                      "h-3 w-3 stroke-[3px]",
+                      "h-4 w-4 stroke-[3px]",
                       item.hasVoted ? "text-white" : "text-current"
                     )}
                   />
@@ -231,29 +234,29 @@ export function FeedbackTab({ data, token }) {
                 </button>
 
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-[15px] text-slate-900 dark:text-slate-100 leading-snug mb-1 font-sans">
+                  <h4 className="font-bold text-[15px] leading-snug mb-1 font-sans text-black">
                     {item.title}
                   </h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed font-sans mb-2">
+                  <p className="text-sm line-clamp-2 leading-relaxed font-sans mb-2 text-slate-700">
                     {item.description}
                   </p>
                   <div className="flex items-center gap-3 mt-2">
                     <span
                       className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide",
+                        "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border",
                         item.status === "planned"
-                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                          ? "bg-amber-100 text-amber-900 border-amber-300"
                           : item.status === "in-progress"
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          ? "bg-blue-100 text-blue-900 border-blue-300"
                           : item.status === "done"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                          ? "bg-green-100 text-green-900 border-green-300"
+                          : "bg-slate-100 text-slate-800 border-slate-300"
                       )}
                     >
                       {item.status.replace("-", " ")}
                     </span>
-                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                    <span className="text-[11px] font-medium flex items-center gap-1 text-slate-600">
+                      <span className="w-1 h-1 rounded-full bg-slate-500"></span>
                       {formatDistanceToNow(new Date(item.createdAt))} ago
                     </span>
                   </div>
@@ -262,9 +265,9 @@ export function FeedbackTab({ data, token }) {
             </Card>
           ))}
           {feedbackList.length === 0 && (
-            <div className="text-center py-10 text-slate-400">
-              <MessageSquare className="w-10 h-10 mx-auto mb-2 opacity-20" />
-              <p>No feedback yet. Be the first!</p>
+            <div className="text-center py-10">
+              <MessageSquare className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+              <p className="text-slate-700">No feedback yet. Be the first!</p>
             </div>
           )}
         </div>

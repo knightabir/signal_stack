@@ -48,19 +48,19 @@ export function RoadmapTab({ data, primaryColor }) {
                 className="flex-1 min-w-[220px] max-w-[280px] h-full flex flex-col"
               >
                 {/* Column Header */}
-                <div className="flex items-center gap-2 py-3 bg-background/95 backdrop-blur z-10 border-b border-transparent dark:border-slate-800">
+                <div className="flex items-center gap-2 py-3 bg-white z-10 border-b border-slate-200">
                   <Icon
                     className={cn(
                       "w-4 h-4",
                       config?.color ? config.color.split(" ")[0] : ""
                     )}
                   />
-                  <h3 className="font-semibold text-sm whitespace-nowrap text-slate-900 dark:text-slate-100">
+                  <h3 className="font-semibold text-sm whitespace-nowrap text-black">
                     {config?.label}
                   </h3>
                   <Badge
                     variant="secondary"
-                    className="ml-auto text-xs h-5 px-1.5 min-w-[1.25rem] justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                    className="ml-auto text-xs h-5 px-1.5 min-w-[1.25rem] justify-center bg-slate-100 text-slate-700"
                   >
                     {columnItems.length}
                   </Badge>
@@ -72,14 +72,14 @@ export function RoadmapTab({ data, primaryColor }) {
                     columnItems.map((item) => (
                       <Card
                         key={item.id}
-                        className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm"
+                        className="border-slate-200 bg-white hover:border-slate-300 transition-colors shadow-sm"
                       >
                         <CardContent className="p-3 space-y-2">
-                          <h4 className="font-bold text-sm leading-tight text-slate-900 dark:text-slate-100 font-sans">
+                          <h4 className="font-bold text-sm leading-tight text-black font-sans">
                             {item.title}
                           </h4>
                           {item.description && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 font-sans leading-relaxed">
+                            <p className="text-xs text-slate-700 line-clamp-3 font-sans leading-relaxed">
                               {item.description}
                             </p>
                           )}
@@ -96,7 +96,7 @@ export function RoadmapTab({ data, primaryColor }) {
                       </Card>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-slate-400 border border-dashed rounded-lg">
+                    <div className="text-center py-8 text-slate-600 border border-slate-300 border-dashed rounded-lg">
                       <p className="text-xs">No items</p>
                     </div>
                   )}
