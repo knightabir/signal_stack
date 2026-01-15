@@ -10,22 +10,28 @@ import {
   Trash2,
   Merge,
   Search,
-  Filter,
-  MoreHorizontal,
   ExternalLink,
   Loader2,
   ArrowUpToLine,
   X,
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const FEEDBACK_STATUS = {
-  new: { label: 'New', color: 'bg-blue-500' },
-  under_review: { label: 'Under Review', color: 'bg-yellow-500' },
-  planned: { label: 'Planned', color: 'bg-purple-500' },
-  in_progress: { label: 'In Progress', color: 'bg-orange-500' },
-  completed: { label: 'Completed', color: 'bg-green-500' },
-  closed: { label: 'Closed', color: 'bg-slate-500' },
+  new: { label: 'New', color: 'bg-blue-500', badge: 'bg-blue-500/20 text-blue-400' },
+  under_review: { label: 'Under Review', color: 'bg-yellow-500', badge: 'bg-yellow-500/20 text-yellow-500' },
+  planned: { label: 'Planned', color: 'bg-purple-500', badge: 'bg-purple-500/20 text-purple-500' },
+  in_progress: { label: 'In Progress', color: 'bg-orange-500', badge: 'bg-orange-500/20 text-orange-400' },
+  completed: { label: 'Completed', color: 'bg-green-500', badge: 'bg-green-500/20 text-green-400' },
+  closed: { label: 'Closed', color: 'bg-slate-500', badge: 'bg-slate-600/20 text-slate-400' },
 };
 
 export default function AdminFeedbackList({ workspace, initialFeedback, canModerate }) {
@@ -33,7 +39,6 @@ export default function AdminFeedbackList({ workspace, initialFeedback, canModer
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showHidden, setShowHidden] = useState(false);
-  const [selectedItems, setSelectedItems] = useState([]);
   const [actionLoading, setActionLoading] = useState(null);
   const [showMergeModal, setShowMergeModal] = useState(null);
   const [showPromoteModal, setShowPromoteModal] = useState(null);
@@ -143,15 +148,15 @@ export default function AdminFeedbackList({ workspace, initialFeedback, canModer
       });
 
       if (res.ok) {
-        // Update feedback status to planned
         setFeedback((prev) =>
           prev.map((f) => (f.id === feedbackId ? { ...f, status: 'planned' } : f))
         );
         setShowPromoteModal(null);
-        alert('Feedback promoted to roadmap!');
+        // You may use a toast here instead of alert for shadcn
+        // toast.success("Feedback promoted to roadmap!");
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to promote');
+        // toast.error(data.error || 'Failed to promote');
       }
     } catch (error) {
       console.error('Failed to promote:', error);
@@ -161,268 +166,305 @@ export default function AdminFeedbackList({ workspace, initialFeedback, canModer
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Feedback</h1>
-          <p className="text-slate-400">Manage and respond to user feedback</p>
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-2">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Feedback</h1>
+          <p className="text-muted-foreground">Manage and respond to user feedback</p>
         </div>
-        <Link
-          href={`/p/${workspace.slug}`}
-          target="_blank"
-          className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300"
-        >
-          <ExternalLink className="w-4 h-4" />
-          View Public Board
-        </Link>
+        <Button asChild variant="outline" className="gap-2">
+          <Link href={`/p/${workspace.slug}`} target="_blank">
+            <ExternalLink className="w-4 h-4" />
+            View Public Board
+          </Link>
+        </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Search feedback..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+      <div className="flex flex-col sm:flex-row items-end gap-4">
+        <div className="flex w-full gap-4">
+          {/* Search Bar - 80% width */}
+          <div className="relative w-full sm:w-[80%]">
+            <Input
+              type="text"
+              aria-label="Search feedback"
+              placeholder="Search feedback..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full"
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+          </div>
+          {/* Filter and Show Hidden together - 20% width */}
+          <div className="flex items-center gap-4 w-full sm:w-[20%]">
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.entries(FEEDBACK_STATUS).map(([value, { label }]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="show-hidden"
+                checked={showHidden}
+                onCheckedChange={(checked) => setShowHidden(!!checked)}
+              />
+              <label htmlFor="show-hidden" className="text-sm text-muted-foreground cursor-pointer">
+                Show hidden
+              </label>
+            </div>
+          </div>
         </div>
-
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="all">All Status</option>
-          {Object.entries(FEEDBACK_STATUS).map(([value, { label }]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-
-        <label className="flex items-center gap-2 text-slate-400">
-          <input
-            type="checkbox"
-            checked={showHidden}
-            onChange={(e) => setShowHidden(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500"
-          />
-          Show hidden
-        </label>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-        {Object.entries(FEEDBACK_STATUS).map(([status, { label, color }]) => {
+        {Object.entries(FEEDBACK_STATUS).map(([status, { label, color, badge }]) => {
           const count = feedback.filter((f) => f.status === status && !f.isHidden).length;
+          const isActive = filter === status;
           return (
-            <button
+            <Card
               key={status}
-              onClick={() => setFilter(status)}
-              className={`p-4 rounded-xl border transition-colors ${
-                filter === status
-                  ? 'bg-slate-700 border-indigo-500'
-                  : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
+              className={`cursor-pointer rounded-xl transition-shadow duration-150 ${
+                isActive ? 'ring-2 ring-indigo-400 border-indigo-500 bg-muted/40' : "hover:ring-1 hover:ring-muted border-muted"
               }`}
+              onClick={() => setFilter(status)}
+              tabIndex={0}
+              aria-pressed={isActive}
+              role="button"
             >
-              <div className={`w-2 h-2 rounded-full ${color} mb-2`} />
-              <div className="text-2xl font-bold text-white">{count}</div>
-              <div className="text-sm text-slate-400">{label}</div>
-            </button>
+              <CardContent className="flex flex-col items-center py-2 px-2 gap-1">
+                <div className={`w-2 h-2 rounded-full mb-1 ${color}`} aria-label={label}></div>
+                <span className="text-xl font-bold">{count}</span>
+                <Badge className={`mt-1 rounded-md px-2 py-1 font-semibold ${badge}`} variant="outline">
+                  {label}
+                </Badge>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
       {/* Feedback Table */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-900/50 border-b border-slate-700">
-            <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Feedback</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400 w-24">Votes</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400 w-32">Status</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400 w-32">Date</th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-slate-400 w-24">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-700/50">
-            {filteredFeedback.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
-                  No feedback found
-                </td>
-              </tr>
-            ) : (
-              filteredFeedback.map((item) => (
-                <tr
-                  key={item.id}
-                  className={`hover:bg-slate-700/30 transition-colors ${
-                    item.isHidden ? 'opacity-50' : ''
-                  }`}
-                >
-                  <td className="px-4 py-4">
-                    <Link
-                      href={`/p/${workspace.slug}/feedback/${item.id}`}
-                      target="_blank"
-                      className="font-medium text-white hover:text-indigo-400 transition-colors"
-                    >
-                      {item.title}
-                    </Link>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
-                      <span>by {item.author?.name || 'Unknown'}</span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" />
-                        {item.commentCount}
-                      </span>
-                      {item.isHidden && (
-                        <span className="text-yellow-500">Hidden</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-1 text-slate-400">
-                      <ChevronUp className="w-4 h-4" />
-                      <span className="font-medium">{item.voteCount}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <select
-                      value={item.status}
-                      onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                      disabled={!canModerate || actionLoading === item.id}
-                      className={`px-2 py-1 text-sm rounded-lg border-0 text-white focus:ring-2 focus:ring-indigo-500 ${
-                        FEEDBACK_STATUS[item.status]?.color || 'bg-slate-600'
-                      }`}
-                    >
-                      {Object.entries(FEEDBACK_STATUS).map(([value, { label }]) => (
-                        <option key={value} value={value} className="bg-slate-800">
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-slate-400">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-4">
-                    {canModerate && (
-                      <div className="flex items-center justify-end gap-1">
-                        {actionLoading === item.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => setShowPromoteModal(item.id)}
-                              className="p-2 text-slate-400 hover:text-green-400 rounded-lg hover:bg-slate-700"
-                              title="Promote to Roadmap"
-                            >
-                              <ArrowUpToLine className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleToggleHidden(item.id, item.isHidden)}
-                              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700"
-                              title={item.isHidden ? 'Show' : 'Hide'}
-                            >
-                              {item.isHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            </button>
-                            <button
-                              onClick={() => setShowMergeModal(item.id)}
-                              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700"
-                              title="Merge"
-                            >
-                              <Merge className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="p-2 text-slate-400 hover:text-red-400 rounded-lg hover:bg-slate-700"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
+      <Card className="overflow-x-auto border-none shadow-none bg-transparent">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Feedback</TableHead>
+                <TableHead className="w-24">Votes</TableHead>
+                <TableHead className="w-36">Status</TableHead>
+                <TableHead className="w-32">Date</TableHead>
+                <TableHead className="w-32 text-right pr-6">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredFeedback.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground text-lg">
+                    No feedback found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredFeedback.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    className={`${item.isHidden ? 'opacity-50' : ''} hover:bg-muted`}
+                  >
+                    <TableCell>
+                      <Link
+                        href={`/p/${workspace.slug}/feedback/${item.id}`}
+                        target="_blank"
+                        className="font-semibold hover:underline"
+                      >
+                        {item.title}
+                      </Link>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                        <span>
+                          by <span className="font-medium">{item.author?.name || 'Unknown'}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" />
+                          {item.commentCount}
+                        </span>
+                        {item.isHidden && (
+                          <Badge variant="destructive" className="ml-2 px-2 py-0">
+                            Hidden
+                          </Badge>
                         )}
                       </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-muted-foreground font-medium">
+                        <ChevronUp className="w-4 h-4" />
+                        <span>{item.voteCount}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {canModerate ? (
+                        <Select
+                          value={item.status}
+                          onValueChange={(value) => handleStatusChange(item.id, value)}
+                          disabled={actionLoading === item.id}
+                        >
+                          <SelectTrigger
+                            className={`w-full text-xs ${FEEDBACK_STATUS[item.status]?.badge || ''}`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(FEEDBACK_STATUS).map(([value, { label }]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge className={`rounded-sm px-2 py-0.5 font-medium ${FEEDBACK_STATUS[item.status]?.badge || ''}`}>
+                          {FEEDBACK_STATUS[item.status]?.label || "Unknown"}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {canModerate && (
+                        <div className="flex items-center justify-end gap-1 pr-2">
+                          {actionLoading === item.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                          ) : (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => setShowPromoteModal(item.id)}
+                                title="Promote to Roadmap"
+                                className="hover:bg-green-100 group"
+                              >
+                                <ArrowUpToLine className="w-4 h-4 group-hover:text-green-600" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleToggleHidden(item.id, item.isHidden)}
+                                title={item.isHidden ? 'Show' : 'Hide'}
+                              >
+                                {item.isHidden ? (
+                                  <Eye className="w-4 h-4 text-blue-400" />
+                                ) : (
+                                  <EyeOff className="w-4 h-4" />
+                                )}
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => setShowMergeModal(item.id)}
+                                title="Merge"
+                              >
+                                <Merge className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleDelete(item.id)}
+                                title="Delete"
+                                className="hover:bg-red-100 group"
+                              >
+                                <Trash2 className="w-4 h-4 group-hover:text-red-600" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Merge Modal */}
-      {showMergeModal && (
+      <Dialog open={!!showMergeModal} onOpenChange={() => setShowMergeModal(null)}>
         <MergeModal
+          open={!!showMergeModal}
           sourceId={showMergeModal}
           feedback={feedback.filter((f) => f.id !== showMergeModal && !f.isHidden)}
           onMerge={handleMerge}
           onClose={() => setShowMergeModal(null)}
           isLoading={actionLoading === showMergeModal}
         />
-      )}
+      </Dialog>
 
       {/* Promote Modal */}
-      {showPromoteModal && (
+      <Dialog open={!!showPromoteModal} onOpenChange={() => setShowPromoteModal(null)}>
         <PromoteModal
+          open={!!showPromoteModal}
           feedbackId={showPromoteModal}
           onPromote={handlePromote}
           onClose={() => setShowPromoteModal(null)}
           isLoading={actionLoading === showPromoteModal}
         />
-      )}
+      </Dialog>
     </div>
   );
 }
 
-function MergeModal({ sourceId, feedback, onMerge, onClose, isLoading }) {
+function MergeModal({ open, sourceId, feedback, onMerge, onClose, isLoading }) {
   const [targetId, setTargetId] = useState('');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-xl">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-white mb-2">Merge Feedback</h2>
-          <p className="text-slate-400 text-sm mb-4">
-            Select the feedback to merge this item into. Votes and comments will be transferred.
-          </p>
-
-          <select
-            value={targetId}
-            onChange={(e) => setTargetId(e.target.value)}
-            className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">Select target feedback...</option>
-            {feedback.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.title} ({f.voteCount} votes)
-              </option>
-            ))}
-          </select>
-
-          <div className="flex justify-end gap-3 mt-6">
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => onMerge(sourceId, targetId)}
-              disabled={!targetId || isLoading}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Merge'}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Merge Feedback</DialogTitle>
+        <DialogDescription>
+          Select the feedback item to merge <span className="font-semibold text-foreground">this</span> into. Votes and comments will be transferred.
+        </DialogDescription>
+      </DialogHeader>
+      <Select value={targetId} onValueChange={setTargetId}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select target feedback..." />
+        </SelectTrigger>
+        <SelectContent>
+          {feedback.length === 0 && (
+            <SelectItem value="" disabled>No available feedback</SelectItem>
+          )}
+          {feedback.map((f) => (
+            <SelectItem key={f.id} value={f.id}>
+              {f.title} <span className="text-xs ml-2 text-muted-foreground">({f.voteCount} votes)</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <DialogFooter className="gap-2">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          disabled={!targetId || isLoading}
+          onClick={() => onMerge(sourceId, targetId)}
+          className="bg-gradient-to-r from-indigo-500 to-purple-600"
+        >
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Merge'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
 
-function PromoteModal({ feedbackId, onPromote, onClose, isLoading }) {
+function PromoteModal({ open, feedbackId, onPromote, onClose, isLoading }) {
   const [stage, setStage] = useState('planned');
-
   const stages = [
     { value: 'planned', label: 'Planned' },
     { value: 'in_progress', label: 'In Progress' },
@@ -430,51 +472,45 @@ function PromoteModal({ feedbackId, onPromote, onClose, isLoading }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h2 className="text-lg font-bold text-white">Promote to Roadmap</h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-4 space-y-4">
-          <p className="text-slate-400 text-sm">
-            This will add the feedback to your public roadmap.
-          </p>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Roadmap Stage
-            </label>
-            <select
-              value={stage}
-              onChange={(e) => setStage(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              {stages.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => onPromote(feedbackId, stage)}
-              disabled={isLoading}
-              className="bg-gradient-to-r from-green-500 to-emerald-600"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Promote'}
-            </Button>
-          </div>
-        </div>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Promote to Roadmap</DialogTitle>
+        <DialogDescription>
+          This will add the feedback to your public roadmap.
+        </DialogDescription>
+      </DialogHeader>
+      <div>
+        <label
+          htmlFor="promote-select"
+          className="block text-sm font-medium text-muted-foreground mb-2"
+        >
+          Roadmap Stage
+        </label>
+        <Select value={stage} onValueChange={setStage}>
+          <SelectTrigger id="promote-select" className="w-full">
+            <SelectValue placeholder="Stage" />
+          </SelectTrigger>
+          <SelectContent>
+            {stages.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-    </div>
+      <DialogFooter className="gap-2 pt-2">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          disabled={isLoading}
+          onClick={() => onPromote(feedbackId, stage)}
+          className="bg-gradient-to-r from-green-500 to-emerald-600"
+        >
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Promote'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
-
