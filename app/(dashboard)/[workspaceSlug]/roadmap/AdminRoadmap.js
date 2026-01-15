@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Loader2,
@@ -9,19 +9,42 @@ import {
   Edit3,
   ExternalLink,
   GripVertical,
-  X,
   ChevronUp,
   MessageSquare,
   CircleDot,
   PlayCircle,
   CheckCircle2,
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 
 const STAGES = [
-  { key: 'planned', label: 'Planned', icon: CircleDot, color: 'text-purple-400', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/50' },
-  { key: 'in_progress', label: 'In Progress', icon: PlayCircle, color: 'text-orange-400', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500/50' },
-  { key: 'shipped', label: 'Shipped', icon: CheckCircle2, color: 'text-green-400', bgColor: 'bg-green-500/20', borderColor: 'border-green-500/50' },
+  {
+    key: 'planned',
+    label: 'Planned',
+    icon: CircleDot,
+    color: 'text-purple-400',
+    badge: 'bg-purple-500/20 text-purple-400',
+  },
+  {
+    key: 'in_progress',
+    label: 'In Progress',
+    icon: PlayCircle,
+    color: 'text-orange-400',
+    badge: 'bg-orange-500/20 text-orange-400',
+  },
+  {
+    key: 'shipped',
+    label: 'Shipped',
+    icon: CheckCircle2,
+    color: 'text-green-400',
+    badge: 'bg-green-500/20 text-green-400',
+  },
 ];
 
 export default function AdminRoadmap({ workspace, canEdit }) {
@@ -37,6 +60,7 @@ export default function AdminRoadmap({ workspace, canEdit }) {
 
   useEffect(() => {
     fetchRoadmap();
+    // eslint-disable-next-line
   }, [workspace.id]);
 
   const fetchRoadmap = async () => {
@@ -71,16 +95,13 @@ export default function AdminRoadmap({ workspace, canEdit }) {
 
     // Optimistic update
     const newRoadmap = { ...roadmap };
-    
-    // Remove from source
     newRoadmap[draggingItem.sourceStage] = newRoadmap[draggingItem.sourceStage]
       .filter((item) => item.id !== draggingItem.id);
-    
-    // Add to target
+
     const itemToAdd = { ...draggingItem, stage: targetStage, order: newOrder };
     delete itemToAdd.sourceStage;
     newRoadmap[targetStage].splice(targetIndex, 0, itemToAdd);
-    
+
     setRoadmap(newRoadmap);
     setDraggingItem(null);
 
@@ -97,14 +118,13 @@ export default function AdminRoadmap({ workspace, canEdit }) {
       });
     } catch (error) {
       console.error('Failed to reorder:', error);
-      fetchRoadmap(); // Refresh on error
+      fetchRoadmap();
     }
   };
 
   const handleDelete = async (itemId, stage) => {
-    if (!confirm('Delete this roadmap item?')) return;
+    if (!window.confirm('Delete this roadmap item?')) return;
 
-    // Optimistic update
     setRoadmap((prev) => ({
       ...prev,
       [stage]: prev[stage].filter((item) => item.id !== itemId),
@@ -153,9 +173,9 @@ export default function AdminRoadmap({ workspace, canEdit }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-none">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-1">
         <div>
           <h1 className="text-2xl font-bold text-white">Roadmap</h1>
           <p className="text-slate-400">Plan and track product development</p>
@@ -178,26 +198,28 @@ export default function AdminRoadmap({ workspace, canEdit }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {STAGES.map((stage) => (
-            <div
+            <Card
               key={stage.key}
-              className="space-y-4"
+              className={`bg-transparent space-y-4 shadow-none`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage.key, roadmap[stage.key].length)}
             >
-              {/* Column Header */}
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${stage.bgColor} border ${stage.borderColor}`}>
+              <CardHeader className={`flex flex-row items-center gap-2 rounded-t-lg py-3 px-4 ${stage.badge}`}>
                 <stage.icon className={`w-5 h-5 ${stage.color}`} />
-                <h2 className={`font-semibold ${stage.color}`}>{stage.label}</h2>
+                <CardTitle className={`text-base font-semibold ${stage.color} pr-2`}>
+                  {stage.label}
+                </CardTitle>
                 <span className="ml-auto text-sm text-slate-400">
                   {roadmap[stage.key]?.length || 0}
                 </span>
-              </div>
-
-              {/* Items */}
-              <div className="space-y-3 min-h-[200px]">
+              </CardHeader>
+              <CardContent className="space-y-3 min-h-[200px] px-4 pb-4 pt-0">
                 {roadmap[stage.key]?.map((item, index) => (
-                  <div
+                  <Card
                     key={item.id}
+                    className={`bg-slate-900 rounded-xl px-4 py-3 transition-all ${
+                      canEdit ? 'cursor-grab hover:border-slate-700' : ''
+                    } ${draggingItem?.id === item.id ? 'opacity-50' : ''}`}
                     draggable={canEdit}
                     onDragStart={(e) => handleDragStart(e, item, stage.key)}
                     onDragOver={(e) => {
@@ -208,16 +230,15 @@ export default function AdminRoadmap({ workspace, canEdit }) {
                       e.stopPropagation();
                       handleDrop(e, stage.key, index);
                     }}
-                    className={`bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 transition-all ${
-                      canEdit ? 'cursor-grab hover:border-slate-600' : ''
-                    } ${draggingItem?.id === item.id ? 'opacity-50' : ''}`}
                   >
                     <div className="flex items-start gap-2">
                       {canEdit && (
                         <GripVertical className="w-4 h-4 text-slate-500 mt-1 flex-shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white">{item.title}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-white truncate">{item.title}</h3>
+                        </div>
                         {item.description && (
                           <p className="text-sm text-slate-400 mt-1 line-clamp-2">
                             {item.description}
@@ -225,7 +246,7 @@ export default function AdminRoadmap({ workspace, canEdit }) {
                         )}
 
                         {item.feedback && (
-                          <div className="flex items-center gap-3 mt-2 text-sm text-slate-500">
+                          <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                             <span className="flex items-center gap-1">
                               <ChevronUp className="w-3 h-3" />
                               {item.feedback.voteCount}
@@ -237,71 +258,92 @@ export default function AdminRoadmap({ workspace, canEdit }) {
                           </div>
                         )}
                       </div>
-
                       {canEdit && (
-                        <div className="flex items-center gap-1">
-                          <button
+                        <div className="flex flex-col items-center gap-1 ml-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="w-8 h-8 text-slate-400 hover:text-white"
                             onClick={() => setShowEditModal(item)}
-                            className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-700"
                           >
                             <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="w-8 h-8 text-slate-400 hover:text-red-400"
                             onClick={() => handleDelete(item.id, stage.key)}
-                            className="p-1.5 text-slate-400 hover:text-red-400 rounded hover:bg-slate-700"
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
-                  </div>
+                  </Card>
                 ))}
-              </div>
-
-              {/* Add Button */}
-              {canEdit && (
-                <button
-                  onClick={() => setShowAddModal(stage.key)}
-                  className="w-full p-3 border-2 border-dashed border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Item
-                </button>
-              )}
-            </div>
+                {canEdit && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-dashed border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white bg-transparent flex items-center justify-center gap-2 mt-2"
+                    onClick={() => setShowAddModal(stage.key)}
+                    type="button"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Item
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
 
       {/* Add Modal */}
-      {showAddModal && (
+      <Dialog open={!!showAddModal} onOpenChange={(open) => !open && setShowAddModal(null)}>
         <ItemModal
           title="Add Roadmap Item"
           stage={showAddModal}
+          open={!!showAddModal}
           onSave={(title, desc) => handleAddItem(title, desc, showAddModal)}
           onClose={() => setShowAddModal(null)}
         />
-      )}
+      </Dialog>
 
       {/* Edit Modal */}
-      {showEditModal && (
+      <Dialog open={!!showEditModal} onOpenChange={(open) => !open && setShowEditModal(null)}>
         <ItemModal
           title="Edit Roadmap Item"
-          initialTitle={showEditModal.title}
-          initialDescription={showEditModal.description}
-          onSave={(title, desc) => handleEditItem(showEditModal.id, title, desc)}
+          initialTitle={showEditModal?.title}
+          initialDescription={showEditModal?.description}
+          open={!!showEditModal}
+          onSave={(title, desc) =>
+            handleEditItem(showEditModal.id, title, desc)
+          }
           onClose={() => setShowEditModal(null)}
         />
-      )}
+      </Dialog>
     </div>
   );
 }
 
-function ItemModal({ title, initialTitle = '', initialDescription = '', stage, onSave, onClose }) {
+function ItemModal({
+  title,
+  initialTitle = '',
+  initialDescription = '',
+  stage,
+  onSave,
+  onClose,
+  open,
+}) {
   const [itemTitle, setItemTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Reset form fields on open
+  useEffect(() => {
+    setItemTitle(initialTitle || '');
+    setDescription(initialDescription || '');
+  }, [open, initialTitle, initialDescription]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -312,60 +354,58 @@ function ItemModal({ title, initialTitle = '', initialDescription = '', stage, o
     setIsLoading(false);
   };
 
+  // Only render DialogContent if open
+  if (!open) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h2 className="text-lg font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700">
-            <X className="w-5 h-5" />
-          </button>
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+      </DialogHeader>
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5"
+      >
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Title <span className="text-red-400">*</span>
+          </label>
+          <Input
+            type="text"
+            required
+            value={itemTitle}
+            onChange={(e) => setItemTitle(e.target.value)}
+            placeholder="Roadmap item title"
+            maxLength={200}
+            className="bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-400"
+          />
         </div>
-
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Title <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={itemTitle}
-              onChange={(e) => setItemTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Roadmap item title"
-              maxLength={200}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              placeholder="Add more details..."
-              rows={3}
-              maxLength={2000}
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!itemTitle.trim() || isLoading}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Description
+          </label>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add more details..."
+            rows={3}
+            maxLength={2000}
+            className="bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-400 resize-none"
+          />
+        </div>
+        <DialogFooter className="flex flex-row gap-2 pt-2">
+          <Button variant="ghost" type="button" disabled={isLoading} onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={!itemTitle.trim() || isLoading}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }
