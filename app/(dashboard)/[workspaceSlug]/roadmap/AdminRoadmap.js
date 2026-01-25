@@ -11,9 +11,10 @@ import {
   GripVertical,
   ChevronUp,
   MessageSquare,
-  CircleDot,
-  PlayCircle,
+  Circle,
+  Clock,
   CheckCircle2,
+  ArrowUpRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -22,28 +23,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const STAGES = [
   {
     key: 'planned',
     label: 'Planned',
-    icon: CircleDot,
-    color: 'text-purple-400',
-    badge: 'bg-purple-500/20 text-purple-400',
+    icon: Circle,
+    color: 'text-amber-500',
+    bg: 'bg-amber-500/10 dark:bg-amber-500/20',
+    borderColor: 'border-amber-200 dark:border-amber-500/20',
   },
   {
     key: 'in_progress',
     label: 'In Progress',
-    icon: PlayCircle,
-    color: 'text-orange-400',
-    badge: 'bg-orange-500/20 text-orange-400',
+    icon: Clock,
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10 dark:bg-blue-500/20',
+    borderColor: 'border-blue-200 dark:border-blue-500/20',
   },
   {
     key: 'shipped',
     label: 'Shipped',
     icon: CheckCircle2,
-    color: 'text-green-400',
-    badge: 'bg-green-500/20 text-green-400',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+    borderColor: 'border-emerald-200 dark:border-emerald-500/20',
   },
 ];
 
@@ -173,21 +178,18 @@ export default function AdminRoadmap({ workspace, canEdit }) {
   };
 
   return (
-    <div className="space-y-8 max-w-none">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-1">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Roadmap</h1>
-          <p className="text-slate-400">Plan and track product development</p>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Roadmap</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Plan and track product development</p>
         </div>
-        <Link
-          href={`/p/${workspace.slug}/roadmap`}
-          target="_blank"
-          className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300"
-        >
-          <ExternalLink className="w-4 h-4" />
-          View Public Roadmap
-        </Link>
+        <Button asChild variant="outline" className="gap-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+          <Link href={`/p/${workspace.slug}/roadmap`} target="_blank">
+            Public Board <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </Button>
       </div>
 
       {/* Kanban Board */}
@@ -196,30 +198,37 @@ export default function AdminRoadmap({ workspace, canEdit }) {
           <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full min-h-[500px]">
           {STAGES.map((stage) => (
-            <Card
+            <div
               key={stage.key}
-              className={`bg-transparent space-y-4 shadow-none`}
+              className="flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-900/30 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage.key, roadmap[stage.key].length)}
             >
-              <CardHeader className={`flex flex-row items-center gap-2 rounded-t-lg py-3 px-4 ${stage.badge}`}>
-                <stage.icon className={`w-5 h-5 ${stage.color}`} />
-                <CardTitle className={`text-base font-semibold ${stage.color} pr-2`}>
-                  {stage.label}
-                </CardTitle>
-                <span className="ml-auto text-sm text-slate-400">
-                  {roadmap[stage.key]?.length || 0}
-                </span>
-              </CardHeader>
-              <CardContent className="space-y-3 min-h-[200px] px-4 pb-4 pt-0">
+              {/* Column Header */}
+              <div className="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 rounded-t-2xl backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                    <div className={cn("p-1.5 rounded-md", stage.bg)}>
+                        <stage.icon className={cn("w-4 h-4", stage.color)} />
+                    </div>
+                    <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{stage.label}</h3>
+                </div>
+                <Badge variant="secondary" className="bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 font-mono">
+                    {roadmap[stage.key]?.length || 0}
+                </Badge>
+              </div>
+
+              {/* Items Area */}
+              <div className="p-3 flex-1 overflow-y-auto space-y-3 min-h-[150px]">
                 {roadmap[stage.key]?.map((item, index) => (
-                  <Card
+                  <div
                     key={item.id}
-                    className={`bg-slate-900 rounded-xl px-4 py-3 transition-all ${
-                      canEdit ? 'cursor-grab hover:border-slate-700' : ''
-                    } ${draggingItem?.id === item.id ? 'opacity-50' : ''}`}
+                    className={cn(
+                        "group relative bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all duration-200",
+                        canEdit ? "cursor-grab active:cursor-grabbing hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-md" : "",
+                        draggingItem?.id === item.id ? "opacity-40 border-dashed border-zinc-400" : ""
+                    )}
                     draggable={canEdit}
                     onDragStart={(e) => handleDragStart(e, item, stage.key)}
                     onDragOver={(e) => {
@@ -231,69 +240,75 @@ export default function AdminRoadmap({ workspace, canEdit }) {
                       handleDrop(e, stage.key, index);
                     }}
                   >
-                    <div className="flex items-start gap-2">
-                      {canEdit && (
-                        <GripVertical className="w-4 h-4 text-slate-500 mt-1 flex-shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-white truncate">{item.title}</h3>
-                        </div>
-                        {item.description && (
-                          <p className="text-sm text-slate-400 mt-1 line-clamp-2">
-                            {item.description}
-                          </p>
-                        )}
+                     <div className="flex items-start gap-3">
+                         {canEdit && <GripVertical className="w-4 h-4 text-zinc-300 dark:text-zinc-600 mt-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                         <div className="flex-1 min-w-0">
+                             <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 mb-1 leading-snug">{item.title}</h4>
+                             {item.description && (
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed mb-3">
+                                    {item.description}
+                                </p>
+                             )}
+                             
+                             {(item.feedback || canEdit) && (
+                                <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800/50 mt-2">
+                                    {item.feedback ? (
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                                                <ChevronUp className="w-3 h-3" />
+                                                {item.feedback.voteCount}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                                                <MessageSquare className="w-3 h-3" />
+                                                {item.feedback.commentCount}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        canEdit && <span className="text-[10px] text-zinc-400 italic">Manual item</span>
+                                    )}
 
-                        {item.feedback && (
-                          <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                            <span className="flex items-center gap-1">
-                              <ChevronUp className="w-3 h-3" />
-                              {item.feedback.voteCount}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" />
-                              {item.feedback.commentCount}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {canEdit && (
-                        <div className="flex flex-col items-center gap-1 ml-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="w-8 h-8 text-slate-400 hover:text-white"
-                            onClick={() => setShowEditModal(item)}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="w-8 h-8 text-slate-400 hover:text-red-400"
-                            onClick={() => handleDelete(item.id, stage.key)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
+                                    {canEdit && (
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-6 w-6 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                                onClick={() => setShowEditModal(item)}
+                                            >
+                                                <Edit3 className="w-3 h-3" />
+                                            </Button>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-6 w-6 text-zinc-400 hover:text-red-600 dark:hover:text-red-400"
+                                                onClick={() => handleDelete(item.id, stage.key)}
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                             )}
+                         </div>
+                     </div>
+                  </div>
                 ))}
-                {canEdit && (
-                  <Button
-                    variant="outline"
-                    className="w-full border-dashed border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white bg-transparent flex items-center justify-center gap-2 mt-2"
-                    onClick={() => setShowAddModal(stage.key)}
-                    type="button"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Item
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+              
+              {/* Footer Action */}
+              {canEdit && (
+                  <div className="p-3 pt-0">
+                    <Button
+                        variant="ghost"
+                        className="w-full border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 hover:border-zinc-300 transition-all font-normal text-xs h-9"
+                        onClick={() => setShowAddModal(stage.key)}
+                    >
+                        <Plus className="w-3.5 h-3.5 mr-2" />
+                        Add Item
+                    </Button>
+                  </div>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -364,11 +379,11 @@ function ItemModal({
       </DialogHeader>
       <form
         onSubmit={handleSubmit}
-        className="space-y-5"
+        className="space-y-4"
       >
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Title <span className="text-red-400">*</span>
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Title <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
@@ -377,11 +392,11 @@ function ItemModal({
             onChange={(e) => setItemTitle(e.target.value)}
             placeholder="Roadmap item title"
             maxLength={200}
-            className="bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-400"
+            className="bg-white dark:bg-zinc-900"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             Description
           </label>
           <Textarea
@@ -390,17 +405,17 @@ function ItemModal({
             placeholder="Add more details..."
             rows={3}
             maxLength={2000}
-            className="bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-400 resize-none"
+            className="bg-white dark:bg-zinc-900 resize-none"
           />
         </div>
         <DialogFooter className="flex flex-row gap-2 pt-2">
-          <Button variant="ghost" type="button" disabled={isLoading} onClick={onClose}>
+          <Button variant="outline" type="button" disabled={isLoading} onClick={onClose}>
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={!itemTitle.trim() || isLoading}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
           </Button>

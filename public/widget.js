@@ -11,7 +11,7 @@
   var token = script.getAttribute('data-token');
   var position = script.getAttribute('data-position') || 'bottom-right';
   var buttonText = script.getAttribute('data-button-text') || 'Feedback';
-  var theme = script.getAttribute('data-theme') || 'auto';
+  var theme = script.getAttribute('data-theme') || 'auto'; // auto, light, dark
 
   if (!token) {
     console.error('Signalstack Widget: Missing data-token attribute');
@@ -102,7 +102,7 @@
   // Create iframe
   var iframe = document.createElement('iframe');
   iframe.className = 'signalstack-widget-iframe';
-  iframe.src = baseUrl + '/widget/' + token;
+  iframe.src = baseUrl + '/widget/' + token + '?theme=' + theme;
   iframe.title = 'Feedback Widget';
   iframe.allow = 'clipboard-write';
 

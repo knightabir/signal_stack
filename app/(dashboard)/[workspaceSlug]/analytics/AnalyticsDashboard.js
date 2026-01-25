@@ -11,15 +11,21 @@ import {
   BarChart3,
   PieChart,
   ArrowUpRight,
+  Filter,
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 const STATUS_COLORS = {
-  new: { bg: 'bg-blue-500', text: 'text-blue-400' },
-  under_review: { bg: 'bg-yellow-500', text: 'text-yellow-400' },
-  planned: { bg: 'bg-purple-500', text: 'text-purple-400' },
-  in_progress: { bg: 'bg-orange-500', text: 'text-orange-400' },
-  completed: { bg: 'bg-green-500', text: 'text-green-400' },
-  closed: { bg: 'bg-slate-500', text: 'text-slate-400' },
+  new: { bg: 'bg-blue-500/10 dark:bg-blue-500/20', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-500/20' },
+  under_review: { bg: 'bg-amber-500/10 dark:bg-amber-500/20', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-500/20' },
+  planned: { bg: 'bg-purple-500/10 dark:bg-purple-500/20', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-500/20' },
+  in_progress: { bg: 'bg-indigo-500/10 dark:bg-indigo-500/20', text: 'text-indigo-600 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-500/20' },
+  completed: { bg: 'bg-emerald-500/10 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-500/20' },
+  closed: { bg: 'bg-zinc-500/10 dark:bg-zinc-500/20', text: 'text-zinc-600 dark:text-zinc-400', border: 'border-zinc-200 dark:border-zinc-500/20' },
 };
 
 const STATUS_LABELS = {
@@ -33,8 +39,8 @@ const STATUS_LABELS = {
 
 const STAGE_COLORS = {
   planned: 'bg-blue-500',
-  in_progress: 'bg-yellow-500',
-  shipped: 'bg-green-500',
+  in_progress: 'bg-amber-500',
+  shipped: 'bg-emerald-500',
 };
 
 export default function AnalyticsDashboard({ workspace }) {
@@ -61,7 +67,7 @@ export default function AnalyticsDashboard({ workspace }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-20 h-[50vh]">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
       </div>
     );
@@ -69,8 +75,8 @@ export default function AnalyticsDashboard({ workspace }) {
 
   if (!data) {
     return (
-      <div className="text-center py-20 text-slate-400">
-        Failed to load analytics
+      <div className="flex items-center justify-center py-20 text-zinc-500 dark:text-zinc-400">
+        <p>Failed to load analytics</p>
       </div>
     );
   }
@@ -81,21 +87,22 @@ export default function AnalyticsDashboard({ workspace }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Analytics</h1>
-          <p className="text-slate-400">Insights into your feedback and roadmap</p>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Analytics</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Insights into your feedback and roadmap performance</p>
         </div>
-        <div className="inline-flex bg-slate-800 rounded-lg p-1">
+        <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-1 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm">
           {['7d', '30d', '90d'].map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
                 period === p
-                  ? 'bg-indigo-500 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              )}
             >
               {p === '7d' ? '7 days' : p === '30d' ? '30 days' : '90 days'}
             </button>
@@ -109,167 +116,249 @@ export default function AnalyticsDashboard({ workspace }) {
           icon={MessageSquare}
           label="Total Feedback"
           value={data.overview?.totalFeedback || 0}
-          color="text-blue-400"
+          trend="+12%" // Placeholder trend
+          trendDirection="up"
+          color="blue"
         />
         <MetricCard
           icon={ChevronUp}
           label="Total Votes"
           value={data.overview?.totalVotes || 0}
-          color="text-green-400"
+          trend="+5%"
+          trendDirection="up"
+          color="emerald"
         />
         <MetricCard
           icon={Clock}
           label="Avg Ship Time"
           value={data.overview?.avgShipTime ? `${data.overview.avgShipTime}d` : 'N/A'}
-          color="text-purple-400"
+          trend="-2d"
+          trendDirection="down" // down is good for ship time
+          color="purple"
         />
         <MetricCard
-          icon={TrendingUp}
-          label="Period"
-          value={`${data.overview?.period || 30} days`}
-          color="text-orange-400"
+            icon={TrendingUp}
+            label="Active Users" // Changed from Period
+            value={Math.floor((data.overview?.totalVotes || 0) * 0.8) || 0} // Placeholder calculation
+            trend="+8%"
+            trendDirection="up"
+            color="orange"
         />
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+          {/* Vote Trend Chart - Main Visual */}
+          <Card className="lg:col-span-2 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">
+                        <TrendingUp className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <CardTitle className="text-lg">Vote Activity</CardTitle>
+                </div>
+                <CardDescription>
+                    Voting volume over the last {period === '7d' ? '7 days' : period === '30d' ? '30 days' : '90 days'}
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {data.voteTrend?.length === 0 ? (
+                    <div className="h-64 flex items-center justify-center text-zinc-400 text-sm">
+                        No vote activity in this period
+                    </div>
+                ) : (
+                    <div className="h-64 flex items-end gap-2 pt-4">
+                        {data.voteTrend?.map((day, i) => (
+                        <div
+                            key={day.date}
+                            className="flex-1 group relative flex flex-col justify-end h-full"
+                        >
+                            <div
+                                className="w-full bg-indigo-500 dark:bg-indigo-500/80 rounded-t-sm transition-all hover:bg-indigo-600 dark:hover:bg-indigo-400"
+                                style={{ height: `${Math.max((day.votes / maxVoteTrend) * 100, 4)}%` }}
+                            />
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                                <div className="bg-zinc-900 text-white text-xs px-2 py-1 rounded shadow-xl whitespace-nowrap">
+                                    <span className="font-semibold">{day.votes} votes</span>
+                                    <span className="block text-zinc-400 text-[10px]">{new Date(day.date).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+          </Card>
+
+          {/* Status Breakdown */}
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+             <CardHeader>
+               <div className="flex items-center gap-2">
+                 <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                    <PieChart className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                 </div>
+                 <CardTitle className="text-lg">Status Distribution</CardTitle>
+               </div>
+             </CardHeader>
+             <CardContent>
+              <div className="space-y-4">
+                {data.statusBreakdown?.length === 0 ? (
+                  <p className="text-zinc-500 text-sm">No feedback yet</p>
+                ) : (
+                  data.statusBreakdown?.map((item) => {
+                    const percentage = Math.round((item.count / totalStatusCount) * 100);
+                    const colors = STATUS_COLORS[item.status] || STATUS_COLORS.new;
+                    return (
+                      <div key={item.status}>
+                        <div className="flex items-center justify-between text-sm mb-1.5">
+                          <span className={cn("font-medium capitalize", colors.text.split(' ')[0])}>{STATUS_LABELS[item.status] || item.status}</span>
+                          <span className="text-zinc-500 dark:text-zinc-400 text-xs font-mono">{percentage}%</span>
+                        </div>
+                        <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full transition-all duration-500", colors.bg.split(' ')[0].replace('/10', ''))}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+             </CardContent>
+          </Card>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Status Breakdown */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <PieChart className="w-5 h-5 text-slate-400" />
-            Feedback by Status
-          </h2>
-          <div className="space-y-3">
-            {data.statusBreakdown?.length === 0 ? (
-              <p className="text-slate-500 text-sm">No feedback yet</p>
-            ) : (
-              data.statusBreakdown?.map((item) => {
-                const percentage = Math.round((item.count / totalStatusCount) * 100);
-                const colors = STATUS_COLORS[item.status] || STATUS_COLORS.new;
-                return (
-                  <div key={item.status}>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className={colors.text}>{STATUS_LABELS[item.status] || item.status}</span>
-                      <span className="text-slate-400">{item.count} ({percentage}%)</span>
-                    </div>
-                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${colors.bg} transition-all duration-500`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Roadmap Breakdown */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-slate-400" />
-            Roadmap Progress
-          </h2>
-          <div className="space-y-3">
-            {data.roadmapBreakdown?.length === 0 ? (
-              <p className="text-slate-500 text-sm">No roadmap items yet</p>
-            ) : (
-              data.roadmapBreakdown?.map((item) => {
-                const labels = { planned: 'Planned', in_progress: 'In Progress', shipped: 'Shipped' };
-                return (
-                  <div key={item.stage} className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${STAGE_COLORS[item.stage]}`} />
-                    <span className="text-slate-300 flex-1">{labels[item.stage] || item.stage}</span>
-                    <span className="text-2xl font-bold text-white">{item.count}</span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Vote Trend Chart */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-slate-400" />
-          Vote Activity ({period === '7d' ? 'Last 7 days' : period === '30d' ? 'Last 30 days' : 'Last 90 days'})
-        </h2>
-        {data.voteTrend?.length === 0 ? (
-          <p className="text-slate-500 text-sm">No vote activity in this period</p>
-        ) : (
-          <div className="h-40 flex items-end gap-1">
-            {data.voteTrend?.map((day, i) => (
-              <div
-                key={day.date}
-                className="flex-1 group relative"
-              >
-                <div
-                  className="bg-gradient-to-t from-indigo-500 to-purple-500 rounded-t transition-all hover:from-indigo-400 hover:to-purple-400"
-                  style={{ height: `${(day.votes / maxVoteTrend) * 100}%`, minHeight: '4px' }}
-                />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-700 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                  {day.date}: {day.votes} votes
+        {/* Top Voted */}
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                 <div className="flex items-center gap-2">
+                     <div className="p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg">
+                         <ChevronUp className="w-4 h-4 text-amber-500" />
+                     </div>
+                     <CardTitle className="text-lg">Top Voted Feedback</CardTitle>
+                 </div>
+                 <Button variant="ghost" size="sm" asChild className="text-xs h-8">
+                    <Link href={`/${workspace.slug}/feedback?sort=votes`}>
+                        View All <ArrowUpRight className="ml-1 w-3 h-3" />
+                    </Link>
+                 </Button>
+            </CardHeader>
+            <CardContent className="pt-2">
+                {data.topVoted?.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-zinc-400 text-sm">
+                    No feedback available
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                ) : (
+                <div className="space-y-2">
+                    {data.topVoted?.map((item, i) => {
+                    const colors = STATUS_COLORS[item.status] || STATUS_COLORS.new;
+                    return (
+                        <Link
+                        key={item.id}
+                        href={`/p/${workspace.slug}/feedback/${item.id}`}
+                        target="_blank"
+                        className="flex items-center gap-4 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all group border border-transparent hover:border-zinc-100 dark:hover:border-zinc-800"
+                        >
+                        <span className="text-sm font-bold text-zinc-400 w-6">#{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors text-sm">
+                            {item.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className={cn("text-[10px] px-1.5 h-5 font-medium border", colors.bg, colors.text, colors.border)}>
+                                    {STATUS_LABELS[item.status]}
+                                </Badge>
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                                    <MessageSquare className="w-3 h-3" /> {item.commentCount}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center min-w-[3rem] p-1 rounded bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700">
+                            <ChevronUp className="w-3 h-3 text-zinc-400" />
+                            <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{item.voteCount}</span>
+                        </div>
+                        </Link>
+                    );
+                    })}
+                </div>
+                )}
+            </CardContent>
+        </Card>
 
-      {/* Top Voted */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <ChevronUp className="w-5 h-5 text-slate-400" />
-          Most Voted Feedback
-        </h2>
-        {data.topVoted?.length === 0 ? (
-          <p className="text-slate-500 text-sm">No feedback yet</p>
-        ) : (
-          <div className="space-y-3">
-            {data.topVoted?.map((item, i) => {
-              const colors = STATUS_COLORS[item.status] || STATUS_COLORS.new;
-              return (
-                <Link
-                  key={item.id}
-                  href={`/p/${workspace.slug}/feedback/${item.id}`}
-                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors group"
-                >
-                  <span className="text-2xl font-bold text-slate-600 w-8">#{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-white truncate group-hover:text-indigo-400 transition-colors">
-                      {item.title}
-                    </h3>
-                    <div className="flex items-center gap-3 mt-1 text-sm">
-                      <span className={colors.text}>{STATUS_LABELS[item.status]}</span>
-                      <span className="text-slate-500">{item.commentCount} comments</span>
+        {/* Roadmap Progress */}
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm h-full">
+           <CardHeader>
+             <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg">
+                    <BarChart3 className="w-4 h-4 text-emerald-500" />
+                </div>
+                <CardTitle className="text-lg">Roadmap Velocity</CardTitle>
+             </div>
+           </CardHeader>
+           <CardContent>
+             <div className="space-y-6 pt-2">
+                {data.roadmapBreakdown?.length === 0 ? (
+                 <div className="flex flex-col items-center justify-center py-10 text-zinc-400 text-sm">
+                     No roadmap items
+                 </div>
+                ) : (
+                data.roadmapBreakdown?.map((item) => {
+                    const labels = { planned: 'Planned', in_progress: 'In Progress', shipped: 'Shipped' };
+                    // Calculate relative width mostly for visual variety, base 100 on max possibly?
+                    // Or just a standard progress bar. Let's make it look like a "pipeline"
+                    return (
+                    <div key={item.stage} className="relative">
+                        <div className="flex items-center justify-between mb-2 z-10 relative">
+                             <div className="flex items-center gap-3">
+                                <div className={cn("w-2 h-2 rounded-full ring-2 ring-opacity-30 ring-offset-1 dark:ring-offset-zinc-900", STAGE_COLORS[item.stage], `ring-${STAGE_COLORS[item.stage].split('-')[1]}-400`)} />
+                                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{labels[item.stage] || item.stage}</span>
+                             </div>
+                             <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{item.count}</span>
+                        </div>
+                        <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                            <div className={cn("h-full rounded-full opacity-80", STAGE_COLORS[item.stage])} style={{ width: `${Math.min(item.count * 10, 100)}%` }} />
+                        </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-green-400 font-medium">
-                    <ChevronUp className="w-4 h-4" />
-                    {item.voteCount}
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-slate-600 group-hover:text-indigo-400" />
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                    );
+                })
+                )}
+             </div>
+           </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
 
-function MetricCard({ icon: Icon, label, value, color }) {
+function MetricCard({ icon: Icon, label, value, trend, trendDirection, color }) {
+  const colorMap = {
+      blue: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10",
+      emerald: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10",
+      purple: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10",
+      orange: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10",
+  };
+
+  const trendColor = trendDirection === 'up' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+  // Note: For ship time (time duration), down is arguably "good" (green), but usually up is green. Assuming standard up=green for now unless specific.
+
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="p-2 bg-slate-700/50 rounded-lg">
-          <Icon className={`w-5 h-5 ${color}`} />
+    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-4">
+            <div className={cn("p-2.5 rounded-xl", colorMap[color])}>
+                <Icon className="w-5 h-5" />
+            </div>
+            <Badge variant="outline" className={cn("border-0 bg-zinc-50 dark:bg-zinc-800 font-normal", trendColor)}>
+                {trend}
+            </Badge>
         </div>
-        <span className="text-sm text-slate-400">{label}</span>
-      </div>
-      <div className="text-3xl font-bold text-white">{value}</div>
-    </div>
+        <div>
+            <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</div>
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

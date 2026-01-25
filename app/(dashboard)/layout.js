@@ -71,8 +71,8 @@ export default function DashboardLayout({ children }) {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500" />
       </div>
     );
   }
@@ -80,27 +80,25 @@ export default function DashboardLayout({ children }) {
   // Breadcrumbs generation
   const generateBreadcrumbs = () => {
     const paths = pathname.split('/').filter(Boolean);
-    // paths[0] is workspace slug, remove it for breadcrumb labeling? 
-    // Usually we want: Workspace / Section / SubSection
-    // But since workspace is in sidebar, maybe just Section / SubSection
-    // Let's assume paths[1+] are the sections.
-    
-    // Example: /workspace-slug/settings/billing
-    // -> Settings / Billing
-    
     const breadcrumbs = [];
     if (paths.length > 1) {
         let currentPath = `/${paths[0]}`;
+        // Skip the workspace slug for the first breadcrumb label if desired, 
+        // or keep it to show hierarchy: Workspace > Section
+        
+        // Add "Dashboard" or Workspace Name as root?
+        // Let's rely on the path structure.
+        
         for (let i = 1; i < paths.length; i++) {
             currentPath += `/${paths[i]}`;
-            const label = paths[i].charAt(0).toUpperCase() + paths[i].slice(1);
+            const label = paths[i].charAt(0).toUpperCase() + paths[i].slice(1).replace(/-/g, ' ');
             breadcrumbs.push({
                 label: label,
                 href: i === paths.length - 1 ? null : currentPath
             });
         }
     } else {
-         breadcrumbs.push({ label: 'Dashboard', href: null });
+         breadcrumbs.push({ label: 'Overview', href: null });
     }
     return breadcrumbs;
   };
@@ -109,47 +107,60 @@ export default function DashboardLayout({ children }) {
 
   return (
     <SidebarProvider>
-      <DashboardSidebar 
-        workspaces={workspaces}
-        currentWorkspace={currentWorkspace}
-        onSwitchWorkspace={handleWorkspaceSwitch}
-        user={session?.user}
-        onSignOut={handleSignOut}
-      />
-      <SidebarInset>
-        <header className="flex sticky top-0 z-10 bg-background h-16 shrink-0 items-center justify-between gap-2 border-b px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        {breadcrumbs.map((crumb, index) => (
-                        <React.Fragment key={index}>
-                            <BreadcrumbItem className="hidden md:block">
-                            {crumb.href ? (
-                                <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
-                            ) : (
-                                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                            )}
-                            </BreadcrumbItem>
-                            {index < breadcrumbs.length - 1 && (
-                            <BreadcrumbSeparator className="hidden md:block" />
-                            )}
-                        </React.Fragment>
-                        ))}
-                    </BreadcrumbList>
-                </Breadcrumb>
+      <div className="flex min-h-screen w-full bg-zinc-50/50 dark:bg-zinc-950/50">
+        <DashboardSidebar 
+          workspaces={workspaces}
+          currentWorkspace={currentWorkspace}
+          onSwitchWorkspace={handleWorkspaceSwitch}
+          user={session?.user}
+          onSignOut={handleSignOut}
+        />
+        <SidebarInset className="flex w-full flex-col bg-zinc-50/50 dark:bg-zinc-950/50">
+          <header className="flex h-14 items-center gap-2 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50 px-4 backdrop-blur-sm sticky top-0 z-10 transition-all">
+              <div className="flex items-center gap-2">
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mr-2 h-4 bg-zinc-200 dark:bg-zinc-800" />
+                  <Breadcrumb>
+                      <BreadcrumbList>
+                          <BreadcrumbItem className="hidden md:block">
+                              <span className="text-zinc-500 dark:text-zinc-400 font-medium">
+                                {currentWorkspace?.name || 'Loading...'}
+                              </span>
+                          </BreadcrumbItem>
+                          {breadcrumbs.length > 0 && <BreadcrumbSeparator className="hidden md:block" />}
+                          {breadcrumbs.map((crumb, index) => (
+                          <React.Fragment key={index}>
+                              <BreadcrumbItem className="hidden md:block">
+                              {crumb.href ? (
+                                  <BreadcrumbLink href={crumb.href} className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors">
+                                    {crumb.label}
+                                  </BreadcrumbLink>
+                              ) : (
+                                  <BreadcrumbPage className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {crumb.label}
+                                  </BreadcrumbPage>
+                              )}
+                              </BreadcrumbItem>
+                              {index < breadcrumbs.length - 1 && (
+                              <BreadcrumbSeparator className="hidden md:block" />
+                              )}
+                          </React.Fragment>
+                          ))}
+                      </BreadcrumbList>
+                  </Breadcrumb>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                  <ModeToggle />
+              </div>
+          </header>
+          
+          <main className="flex-1 p-6">
+            <div className="mx-auto w-full max-w-[1600px] animate-in fade-in slide-in-from-bottom-2 duration-500">
+              {children}
             </div>
-            <div className="flex items-center gap-2">
-                <ModeToggle />
-            </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <main className="flex-1 py-4">
-            {children}
           </main>
-        </div>
-      </SidebarInset>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }

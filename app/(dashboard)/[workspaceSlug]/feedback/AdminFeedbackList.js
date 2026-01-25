@@ -14,6 +14,9 @@ import {
   Loader2,
   ArrowUpToLine,
   X,
+  Filter,
+  MoreHorizontal,
+  ArrowUpRight
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,14 +27,15 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const FEEDBACK_STATUS = {
-  new: { label: 'New', color: 'bg-blue-500', badge: 'bg-blue-500/20 text-blue-400' },
-  under_review: { label: 'Under Review', color: 'bg-yellow-500', badge: 'bg-yellow-500/20 text-yellow-500' },
-  planned: { label: 'Planned', color: 'bg-purple-500', badge: 'bg-purple-500/20 text-purple-500' },
-  in_progress: { label: 'In Progress', color: 'bg-orange-500', badge: 'bg-orange-500/20 text-orange-400' },
-  completed: { label: 'Completed', color: 'bg-green-500', badge: 'bg-green-500/20 text-green-400' },
-  closed: { label: 'Closed', color: 'bg-slate-500', badge: 'bg-slate-600/20 text-slate-400' },
+  new: { label: 'New', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' },
+  under_review: { label: 'Under Review', color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-500/20' },
+  planned: { label: 'Planned', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20' },
+  in_progress: { label: 'In Progress', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20' },
+  completed: { label: 'Completed', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' },
+  closed: { label: 'Closed', color: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700' },
 };
 
 export default function AdminFeedbackList({ workspace, initialFeedback, canModerate }) {
@@ -152,11 +156,8 @@ export default function AdminFeedbackList({ workspace, initialFeedback, canModer
           prev.map((f) => (f.id === feedbackId ? { ...f, status: 'planned' } : f))
         );
         setShowPromoteModal(null);
-        // You may use a toast here instead of alert for shadcn
-        // toast.success("Feedback promoted to roadmap!");
       } else {
         const data = await res.json();
-        // toast.error(data.error || 'Failed to promote');
       }
     } catch (error) {
       console.error('Failed to promote:', error);
@@ -165,234 +166,212 @@ export default function AdminFeedbackList({ workspace, initialFeedback, canModer
     }
   };
 
+  const statusCounts = Object.keys(FEEDBACK_STATUS).reduce((acc, status) => {
+    acc[status] = feedback.filter(f => f.status === status && !f.isHidden).length;
+    return acc;
+  }, {});
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-2">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Feedback</h1>
-          <p className="text-muted-foreground">Manage and respond to user feedback</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Feedback</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Manage and respond to user feedback</p>
         </div>
-        <Button asChild variant="outline" className="gap-2">
+        <Button asChild variant="outline" className="gap-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
           <Link href={`/p/${workspace.slug}`} target="_blank">
-            <ExternalLink className="w-4 h-4" />
-            View Public Board
+            Public Board <ArrowUpRight className="w-4 h-4" />
           </Link>
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-end gap-4">
-        <div className="flex w-full gap-4">
-          {/* Search Bar - 80% width */}
-          <div className="relative w-full sm:w-[80%]">
-            <Input
-              type="text"
-              aria-label="Search feedback"
-              placeholder="Search feedback..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-full"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-          </div>
-          {/* Filter and Show Hidden together - 20% width */}
-          <div className="flex items-center gap-4 w-full sm:w-[20%]">
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                {Object.entries(FEEDBACK_STATUS).map(([value, { label }]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="show-hidden"
-                checked={showHidden}
-                onCheckedChange={(checked) => setShowHidden(!!checked)}
-              />
-              <label htmlFor="show-hidden" className="text-sm text-muted-foreground cursor-pointer">
-                Show hidden
-              </label>
-            </div>
-          </div>
+       {/* Stats Grid */}
+       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {Object.entries(FEEDBACK_STATUS).map(([status, config]) => (
+          <button
+            key={status}
+            onClick={() => setFilter(filter === status ? 'all' : status)}
+            className={`
+              flex flex-col p-4 rounded-xl border transition-all duration-200 text-left
+              ${filter === status 
+                ? 'bg-white dark:bg-zinc-800 border-indigo-500 ring-1 ring-indigo-500 shadow-sm' 
+                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+              }
+            `}
+          >
+            <span className={`text-xs font-semibold uppercase tracking-wider mb-1 ${
+               filter === status ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'
+            }`}>
+              {config.label}
+            </span>
+            <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              {statusCounts[status] || 0}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Main Content Card */}
+      <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
+             {/* Search */}
+             <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Input
+                  placeholder="Search feedback..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
+                />
+             </div>
+             
+             {/* Filters */}
+             <div className="flex items-center gap-3 w-full sm:w-auto">
+                 <div className="flex items-center gap-2">
+                    <Checkbox
+                        id="show-hidden"
+                        checked={showHidden}
+                        onCheckedChange={(checked) => setShowHidden(!!checked)}
+                    />
+                    <label htmlFor="show-hidden" className="text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
+                        Show hidden
+                    </label>
+                 </div>
+                 <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block"></div>
+                <Select value={filter} onValueChange={setFilter}>
+                    <SelectTrigger className="w-[140px] border-zinc-200 dark:border-zinc-800 hidden sm:flex">
+                        <Filter className="w-3.5 h-3.5 mr-2 text-zinc-400" />
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        {Object.entries(FEEDBACK_STATUS).map(([value, { label }]) => (
+                        <SelectItem key={value} value={value}>
+                            {label}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+             </div>
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-        {Object.entries(FEEDBACK_STATUS).map(([status, { label, color, badge }]) => {
-          const count = feedback.filter((f) => f.status === status && !f.isHidden).length;
-          const isActive = filter === status;
-          return (
-            <Card
-              key={status}
-              className={`cursor-pointer rounded-xl transition-shadow duration-150 ${
-                isActive ? 'ring-2 ring-indigo-400 border-indigo-500 bg-muted/40' : "hover:ring-1 hover:ring-muted border-muted"
-              }`}
-              onClick={() => setFilter(status)}
-              tabIndex={0}
-              aria-pressed={isActive}
-              role="button"
-            >
-              <CardContent className="flex flex-col items-center py-2 px-2 gap-1">
-                <div className={`w-2 h-2 rounded-full mb-1 ${color}`} aria-label={label}></div>
-                <span className="text-xl font-bold">{count}</span>
-                <Badge className={`mt-1 rounded-md px-2 py-1 font-semibold ${badge}`} variant="outline">
-                  {label}
-                </Badge>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Feedback Table */}
-      <Card className="overflow-x-auto border-none shadow-none bg-transparent">
-        <CardContent className="p-0">
-          <Table>
+        <div className="relative overflow-x-auto">
+           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Feedback</TableHead>
-                <TableHead className="w-24">Votes</TableHead>
-                <TableHead className="w-36">Status</TableHead>
-                <TableHead className="w-32">Date</TableHead>
-                <TableHead className="w-32 text-right pr-6">Actions</TableHead>
+              <TableRow className="hover:bg-transparent border-zinc-200 dark:border-zinc-800">
+                <TableHead className="w-[40%] pl-6">Feedback</TableHead>
+                <TableHead>Author</TableHead>
+                <TableHead>Votes</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right pr-6">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredFeedback.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground text-lg">
-                    No feedback found
+                  <TableCell colSpan={5} className="h-32 text-center text-zinc-500">
+                    No feedback found matching your filters.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredFeedback.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    className={`${item.isHidden ? 'opacity-50' : ''} hover:bg-muted`}
-                  >
-                    <TableCell>
-                      <Link
-                        href={`/p/${workspace.slug}/feedback/${item.id}`}
-                        target="_blank"
-                        className="font-semibold hover:underline"
-                      >
-                        {item.title}
-                      </Link>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                        <span>
-                          by <span className="font-medium">{item.author?.name || 'Unknown'}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare className="w-3 h-3" />
-                          {item.commentCount}
-                        </span>
-                        {item.isHidden && (
-                          <Badge variant="destructive" className="ml-2 px-2 py-0">
-                            Hidden
-                          </Badge>
-                        )}
+                  <TableRow key={item.id} className="group hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800/50">
+                    <TableCell className="pl-6">
+                      <div className="flex flex-col gap-1">
+                         <div className="flex items-center gap-2">
+                             {item.isHidden && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700">
+                                    HIDDEN
+                                </span>
+                             )}
+                             <Link href={`/p/${workspace.slug}/feedback/${item.id}`} target="_blank" className="font-medium text-zinc-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors line-clamp-1">
+                                {item.title}
+                             </Link>
+                         </div>
+                         <div className="flex items-center gap-3 text-xs text-zinc-500">
+                            <span className="flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3" />
+                                {item.commentCount}
+                            </span>
+                            <span>
+                                {new Date(item.createdAt).toLocaleDateString()}
+                            </span>
+                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1 text-muted-foreground font-medium">
-                        <ChevronUp className="w-4 h-4" />
-                        <span>{item.voteCount}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {canModerate ? (
-                        <Select
-                          value={item.status}
-                          onValueChange={(value) => handleStatusChange(item.id, value)}
-                          disabled={actionLoading === item.id}
-                        >
-                          <SelectTrigger
-                            className={`w-full text-xs ${FEEDBACK_STATUS[item.status]?.badge || ''}`}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(FEEDBACK_STATUS).map(([value, { label }]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge className={`rounded-sm px-2 py-0.5 font-medium ${FEEDBACK_STATUS[item.status]?.badge || ''}`}>
-                          {FEEDBACK_STATUS[item.status]?.label || "Unknown"}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {canModerate && (
-                        <div className="flex items-center justify-end gap-1 pr-2">
-                          {actionLoading === item.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                          ) : (
-                            <>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setShowPromoteModal(item.id)}
-                                title="Promote to Roadmap"
-                                className="hover:bg-green-100 group"
-                              >
-                                <ArrowUpToLine className="w-4 h-4 group-hover:text-green-600" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleToggleHidden(item.id, item.isHidden)}
-                                title={item.isHidden ? 'Show' : 'Hide'}
-                              >
-                                {item.isHidden ? (
-                                  <Eye className="w-4 h-4 text-blue-400" />
-                                ) : (
-                                  <EyeOff className="w-4 h-4" />
-                                )}
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setShowMergeModal(item.id)}
-                                title="Merge"
-                              >
-                                <Merge className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleDelete(item.id)}
-                                title="Delete"
-                                className="hover:bg-red-100 group"
-                              >
-                                <Trash2 className="w-4 h-4 group-hover:text-red-600" />
-                              </Button>
-                            </>
-                          )}
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                {item.author?.name || 'Anonymous'}
+                            </span>
+                            {item.author?.email && (
+                                <span className="text-xs text-zinc-500">
+                                    {item.author.email}
+                                </span>
+                            )}
                         </div>
-                      )}
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant="secondary" className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200">
+                            <ChevronUp className="w-3 h-3 mr-1" />
+                            {item.voteCount}
+                        </Badge>
+                    </TableCell>
+                    <TableCell>
+                        <div className="w-[140px]" onClick={(e) => e.stopPropagation()}>
+                            <Select
+                                value={item.status}
+                                onValueChange={(value) => handleStatusChange(item.id, value)}
+                                disabled={actionLoading === item.id}
+                            >
+                                <SelectTrigger className={`h-8 border-0 ring-1 ring-inset ${FEEDBACK_STATUS[item.status]?.color?.replace('text-', 'ring-').split(' ')[0]} bg-transparent`}>
+                                   <div className={`w-2 h-2 rounded-full mr-2 ${FEEDBACK_STATUS[item.status]?.color?.replace('bg-', 'bg-').split(' ')[0].replace('/10', '')}`} />
+                                   <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(FEEDBACK_STATUS).map(([value, config]) => (
+                                    <SelectItem key={value} value={value}>
+                                        {config.label}
+                                    </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                                  <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[160px]">
+                              <DropdownMenuItem onClick={() => setShowPromoteModal(item.id)}>
+                                  <ArrowUpToLine className="w-4 h-4 mr-2" />
+                                  Promote
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setShowMergeModal(item.id)}>
+                                  <Merge className="w-4 h-4 mr-2" />
+                                  Merge
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleHidden(item.id, item.isHidden)}>
+                                  {item.isHidden ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                                  {item.isHidden ? "Show" : "Hide"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDelete(item.id)} className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/10">
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                              </DropdownMenuItem>
+                          </DropdownMenuContent>
+                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Merge Modal */}
@@ -442,19 +421,19 @@ function MergeModal({ open, sourceId, feedback, onMerge, onClose, isLoading }) {
           )}
           {feedback.map((f) => (
             <SelectItem key={f.id} value={f.id}>
-              {f.title} <span className="text-xs ml-2 text-muted-foreground">({f.voteCount} votes)</span>
+              {f.title} <span className="text-xs ml-2 text-zinc-500">({f.voteCount} votes)</span>
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
       <DialogFooter className="gap-2">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
         <Button
           disabled={!targetId || isLoading}
           onClick={() => onMerge(sourceId, targetId)}
-          className="bg-gradient-to-r from-indigo-500 to-purple-600"
+          className="bg-indigo-600 hover:bg-indigo-700"
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Merge'}
         </Button>
@@ -482,7 +461,7 @@ function PromoteModal({ open, feedbackId, onPromote, onClose, isLoading }) {
       <div>
         <label
           htmlFor="promote-select"
-          className="block text-sm font-medium text-muted-foreground mb-2"
+          className="block text-sm font-medium text-zinc-500 mb-2"
         >
           Roadmap Stage
         </label>
@@ -500,13 +479,13 @@ function PromoteModal({ open, feedbackId, onPromote, onClose, isLoading }) {
         </Select>
       </div>
       <DialogFooter className="gap-2 pt-2">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
         <Button
           disabled={isLoading}
           onClick={() => onPromote(feedbackId, stage)}
-          className="bg-gradient-to-r from-green-500 to-emerald-600"
+          className="bg-indigo-600 hover:bg-indigo-700"
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Promote'}
         </Button>

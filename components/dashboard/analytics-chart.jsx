@@ -37,9 +37,12 @@ export function AnalyticsChart({ data }) {
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: "#1e293b",
-            borderColor: "#334155",
+            backgroundColor: "#18181b",
+            borderColor: "#27272a",
             color: "#fff",
+            borderRadius: "8px",
+            boxShadow:
+              "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
           }}
           itemStyle={{ color: "#fff" }}
           cursor={{ stroke: "#6366f1", strokeWidth: 1 }}

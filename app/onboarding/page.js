@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import {
   Loader2,
   ArrowRight,
@@ -15,7 +18,9 @@ import {
   Check,
   X,
   Sparkles,
+  Zap,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const STEPS = [
   { id: 'workspace', title: 'Workspace', icon: Link2 },
@@ -33,28 +38,23 @@ const LANGUAGES = [
   { code: 'zh', name: '中文', flag: '🇨🇳' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
   { code: 'ko', name: '한국어', flag: '🇰🇷' },
-  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
-  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
 ];
 
 const COMPANY_SIZES = [
-  { value: 'solo', label: 'Just me', description: 'Solo founder or indie maker' },
-  { value: '2-10', label: '2-10', description: 'Small team' },
-  { value: '11-50', label: '11-50', description: 'Growing company' },
-  { value: '51-200', label: '51-200', description: 'Mid-size company' },
-  { value: '201-500', label: '201-500', description: 'Large company' },
-  { value: '500+', label: '500+', description: 'Enterprise' },
+  { value: 'solo', label: 'Just me', description: 'Solo founder' },
+  { value: '2-10', label: '2-10', description: 'Startup' },
+  { value: '11-50', label: '11-50', description: 'Growing' },
+  { value: '51-200', label: '51-200', description: 'Scaling' },
+  { value: '201-500', label: '201+', description: 'Enterprise' },
 ];
 
 const TEAMS = [
-  { value: 'founder', label: 'Founder / CEO', icon: '👑' },
+  { value: 'founder', label: 'Founder', icon: '👑' },
   { value: 'product', label: 'Product', icon: '📦' },
-  { value: 'engineering', label: 'Engineering', icon: '⚙️' },
+  { value: 'engineering', label: 'Eng', icon: '⚙️' },
   { value: 'design', label: 'Design', icon: '🎨' },
-  { value: 'marketing', label: 'Marketing', icon: '📢' },
-  { value: 'sales', label: 'Sales', icon: '💼' },
-  { value: 'support', label: 'Support', icon: '🎧' },
-  { value: 'other', label: 'Other', icon: '🔧' },
+  { value: 'marketing', label: 'Growth', icon: '🚀' },
+  { value: 'other', label: 'Other', icon: '✨' },
 ];
 
 export default function OnboardingPage() {
@@ -76,7 +76,6 @@ export default function OnboardingPage() {
     team: '',
   });
 
-  // Check slug availability with debounce
   const checkSlugAvailability = useCallback(async (slug) => {
     if (!slug || slug.length < 3) {
       setSlugAvailable(false);
@@ -103,7 +102,6 @@ export default function OnboardingPage() {
     }
   }, []);
 
-  // Debounce slug check
   useEffect(() => {
     const timer = setTimeout(() => {
       if (formData.workspaceUrl) {
@@ -114,7 +112,6 @@ export default function OnboardingPage() {
     return () => clearTimeout(timer);
   }, [formData.workspaceUrl, checkSlugAvailability]);
 
-  // Auto-generate slug from workspace name
   const handleWorkspaceNameChange = (name) => {
     setFormData((prev) => ({
       ...prev,
@@ -194,7 +191,6 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Update the session to reflect onboarding completion
       await update({
         onboardingCompleted: true,
         defaultWorkspace: {
@@ -204,7 +200,6 @@ export default function OnboardingPage() {
         },
       });
 
-      // Redirect to new workspace
       router.push(`/${data.workspace.slug}`);
       router.refresh();
     } catch (err) {
@@ -215,8 +210,8 @@ export default function OnboardingPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-500" />
       </div>
     );
   }
@@ -226,259 +221,208 @@ export default function OnboardingPage() {
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent" />
+  const StepIcon = STEPS[currentStep]?.icon || Zap;
 
-      <div className="relative w-full max-w-xl">
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
-          {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
-                  index < currentStep
-                    ? 'bg-indigo-500 border-indigo-500 text-white'
-                    : index === currentStep
-                    ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400'
-                    : 'bg-slate-800 border-slate-600 text-slate-500'
-                }`}
-              >
-                {index < currentStep ? (
-                  <Check className="w-5 h-5" />
-                ) : (
-                  <step.icon className="w-5 h-5" />
-                )}
-              </div>
-              {index < STEPS.length - 1 && (
-                <div
-                  className={`w-12 h-0.5 mx-2 transition-all ${
-                    index < currentStep ? 'bg-indigo-500' : 'bg-slate-700'
-                  }`}
-                />
-              )}
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4 font-sans selection:bg-indigo-500/20">
+      <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)]" />
+
+      <div className="relative w-full max-w-lg space-y-8">
+        
+        {/* Progress Bar */}
+        <div className="flex flex-col gap-2">
+            <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 px-1">
+                <span>Step {currentStep + 1} of {STEPS.length}</span>
+                <span>{STEPS[currentStep].title}</span>
             </div>
-          ))}
+            <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                    className="h-full bg-indigo-600 transition-all duration-500 ease-in-out" 
+                    style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+                />
+            </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
-          {/* Step 1: Workspace URL */}
-          {currentStep === 0 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-                  <Link2 className="w-7 h-7 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Choose your workspace URL</h2>
-                <p className="text-slate-400">This will be your unique URL for feedback and roadmap</p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Workspace Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.workspaceName}
-                    onChange={(e) => handleWorkspaceNameChange(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    placeholder="My Awesome Product"
-                    maxLength={100}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Workspace URL
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                      signalstack.com/
-                    </span>
-                    <input
-                      type="text"
-                      value={formData.workspaceUrl}
-                      onChange={(e) => handleUrlChange(e.target.value)}
-                      className={`w-full pl-36 pr-12 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
-                        slugError
-                          ? 'border-red-500 focus:ring-red-500'
-                          : slugAvailable
-                          ? 'border-green-500 focus:ring-green-500'
-                          : 'border-slate-600 focus:ring-indigo-500'
-                      }`}
-                      placeholder="my-product"
-                      maxLength={50}
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {isCheckingSlug ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                      ) : slugAvailable ? (
-                        <Check className="w-5 h-5 text-green-500" />
-                      ) : slugError ? (
-                        <X className="w-5 h-5 text-red-500" />
-                      ) : null}
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-200/50 dark:shadow-zinc-900/50 overflow-hidden">
+          <CardHeader className="text-center pb-2 pt-8">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
+                <StepIcon className="h-7 w-7" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                {currentStep === 0 && "Name your workspace"}
+                {currentStep === 1 && "Choose default language"}
+                {currentStep === 2 && "Company size"}
+                {currentStep === 3 && "Your role"}
+            </CardTitle>
+            <CardDescription className="text-zinc-500 dark:text-zinc-400 text-base">
+                {currentStep === 0 && "Give your workspace a unique name and URL."}
+                {currentStep === 1 && "Select the primary language for your public board."}
+                {currentStep === 2 && "Help us tailor the experience for your team."}
+                {currentStep === 3 && "What describes your role best?"}
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="p-8">
+            {/* Step 1: Workspace URL */}
+            {currentStep === 0 && (
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    <div className="space-y-2">
+                        <Label htmlFor="workspaceName">Workspace Name</Label>
+                        <Input
+                            id="workspaceName"
+                            value={formData.workspaceName}
+                            onChange={(e) => handleWorkspaceNameChange(e.target.value)}
+                            className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500 h-11 text-lg"
+                            placeholder="Acme Corp"
+                            autoFocus
+                        />
                     </div>
-                  </div>
-                  {slugError && (
-                    <p className="mt-2 text-sm text-red-400">{slugError}</p>
-                  )}
-                  {slugAvailable && (
-                    <p className="mt-2 text-sm text-green-400">This URL is available!</p>
-                  )}
+
+                    <div className="space-y-2">
+                        <Label htmlFor="workspaceUrl">Workspace URL</Label>
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-950 rounded-l-md border-r border-zinc-200 dark:border-zinc-800 pr-2 text-sm">
+                                signalstack.com/
+                            </div>
+                            <Input
+                                id="workspaceUrl"
+                                value={formData.workspaceUrl}
+                                onChange={(e) => handleUrlChange(e.target.value)}
+                                className={cn(
+                                    "pl-[8.5rem] pr-10 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500 h-11 font-medium",
+                                    slugError && "border-red-500 focus:ring-red-500",
+                                    slugAvailable && "border-emerald-500 focus:ring-emerald-500"
+                                )}
+                                placeholder="acme"
+                            />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                {isCheckingSlug ? (
+                                    <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                                ) : slugAvailable ? (
+                                    <Check className="h-4 w-4 text-emerald-500" />
+                                ) : slugError ? (
+                                    <X className="h-4 w-4 text-red-500" />
+                                ) : null}
+                            </div>
+                        </div>
+                        {slugError && <p className="text-xs text-red-500 font-medium ml-1">{slugError}</p>}
+                    </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Language */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-                  <Globe className="w-7 h-7 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Select your language</h2>
-                <p className="text-slate-400">Choose the default language for your workspace</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {LANGUAGES.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => setFormData((prev) => ({ ...prev, language: lang.code }))}
-                    className={`flex items-center gap-3 p-4 rounded-lg border transition-all ${
-                      formData.language === lang.code
-                        ? 'bg-indigo-500/20 border-indigo-500 text-white'
-                        : 'bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-700/50'
-                    }`}
-                  >
-                    <span className="text-2xl">{lang.flag}</span>
-                    <span className="font-medium">{lang.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Company Size */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-                  <Building2 className="w-7 h-7 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-2">How large is your company?</h2>
-                <p className="text-slate-400">This helps us tailor your experience</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {COMPANY_SIZES.map((size) => (
-                  <button
-                    key={size.value}
-                    onClick={() => setFormData((prev) => ({ ...prev, companySize: size.value }))}
-                    className={`flex flex-col items-center p-4 rounded-lg border transition-all ${
-                      formData.companySize === size.value
-                        ? 'bg-indigo-500/20 border-indigo-500 text-white'
-                        : 'bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-700/50'
-                    }`}
-                  >
-                    <span className="text-xl font-bold">{size.label}</span>
-                    <span className="text-sm text-slate-400">{size.description}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Team */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-                  <Users className="w-7 h-7 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-2">What team are you in?</h2>
-                <p className="text-slate-400">Tell us about your role</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {TEAMS.map((team) => (
-                  <button
-                    key={team.value}
-                    onClick={() => setFormData((prev) => ({ ...prev, team: team.value }))}
-                    className={`flex items-center gap-3 p-4 rounded-lg border transition-all ${
-                      formData.team === team.value
-                        ? 'bg-indigo-500/20 border-indigo-500 text-white'
-                        : 'bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-700/50'
-                    }`}
-                  >
-                    <span className="text-2xl">{team.icon}</span>
-                    <span className="font-medium">{team.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Error */}
-          {error && (
-            <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-8">
-            {currentStep > 0 ? (
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                className="text-slate-400 hover:text-white"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            ) : (
-              <div />
             )}
 
-            {currentStep < STEPS.length - 1 ? (
-              <Button
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
-              >
-                Continue
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSubmit}
+            {/* Step 2: Language */}
+            {currentStep === 1 && (
+                <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-right-4 duration-300">
+                    {LANGUAGES.map((lang) => (
+                    <button
+                        key={lang.code}
+                        onClick={() => setFormData((prev) => ({ ...prev, language: lang.code }))}
+                        className={cn(
+                            "flex items-center gap-3 p-4 rounded-xl border text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
+                            formData.language === lang.code
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20 ring-2 ring-indigo-600 ring-offset-2 ring-offset-white dark:ring-offset-black"
+                            : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-200"
+                        )}
+                    >
+                        <span className="text-2xl">{lang.flag}</span>
+                        <span className="font-medium">{lang.name}</span>
+                        {formData.language === lang.code && <Check className="ml-auto w-4 h-4 text-indigo-200" />}
+                    </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Step 3: Company Size */}
+            {currentStep === 2 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in slide-in-from-right-4 duration-300">
+                    {COMPANY_SIZES.map((size) => (
+                    <button
+                        key={size.value}
+                        onClick={() => setFormData((prev) => ({ ...prev, companySize: size.value }))}
+                        className={cn(
+                            "flex flex-col items-center p-4 rounded-xl border transition-all text-center hover:scale-[1.02] active:scale-[0.98]",
+                            formData.companySize === size.value
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20 ring-2 ring-indigo-600 ring-offset-2 ring-offset-white dark:ring-offset-black"
+                            : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-200"
+                        )}
+                    >
+                        <span className="text-lg font-bold">{size.label}</span>
+                        <span className={cn(
+                            "text-xs mt-1",
+                            formData.companySize === size.value ? "text-indigo-200" : "text-zinc-500 dark:text-zinc-400"
+                        )}>{size.description}</span>
+                    </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Step 4: Team */}
+            {currentStep === 3 && (
+                <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-right-4 duration-300">
+                    {TEAMS.map((team) => (
+                    <button
+                        key={team.value}
+                        onClick={() => setFormData((prev) => ({ ...prev, team: team.value }))}
+                        className={cn(
+                            "flex flex-col items-center justify-center p-4 rounded-xl border transition-all hover:scale-[1.02] active:scale-[0.98] gap-2",
+                            formData.team === team.value
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20 ring-2 ring-indigo-600 ring-offset-2 ring-offset-white dark:ring-offset-black"
+                            : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-200"
+                        )}
+                    >
+                        <span className="text-3xl">{team.icon}</span>
+                        <span className="font-medium text-sm">{team.label}</span>
+                    </button>
+                    ))}
+                </div>
+            )}
+            
+            {error && (
+                <div className="mt-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    {error}
+                </div>
+            )}
+          </CardContent>
+          
+          <CardFooter className="flex justify-between p-8 bg-zinc-50/50 dark:bg-zinc-900/30 border-t border-zinc-100 dark:border-zinc-800">
+             <Button
+                variant="ghost"
+                onClick={handleBack}
+                disabled={currentStep === 0}
+                className={cn(
+                    "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",
+                    currentStep === 0 && "opacity-0 pointer-events-none"
+                )}
+             >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+             </Button>
+
+             <Button
+                onClick={currentStep === STEPS.length - 1 ? handleSubmit : handleNext}
                 disabled={!canProceed() || isLoading}
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
-              >
+                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 min-w-[120px]"
+             >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
+                    Setting up...
+                  </>
+                ) : currentStep === STEPS.length - 1 ? (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Finish
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Complete Setup
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Step indicator text */}
-        <p className="text-center text-slate-500 text-sm mt-4">
-          Step {currentStep + 1} of {STEPS.length}
-        </p>
+             </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

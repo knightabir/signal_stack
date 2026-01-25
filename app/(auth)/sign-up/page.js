@@ -17,12 +17,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Loader2,
-  User,
-  Mail,
-  Lock,
   AlertCircle,
-  CheckCircle2
+  Check,
+  Command,
+  X
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function PasswordRequirements({ password, confirmPassword }) {
   const requirements = [
@@ -32,18 +32,33 @@ function PasswordRequirements({ password, confirmPassword }) {
       text: 'Passwords match'
     }
   ];
+  
   if (!password.length) return null;
+  
   return (
-    <ul className="space-y-1 mt-2">
-      {requirements.map((req, i) => (
-        <li key={i} className="flex items-center text-sm gap-2">
-          <CheckCircle2 className={`h-4 w-4 ${req.met ? 'text-green-500' : 'text-muted-foreground'}`} />
-          <span className={req.met ? 'text-green-500' : 'text-muted-foreground'}>
-            {req.text}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-2 mt-3 p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-100 dark:border-zinc-800">
+      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Password requirements:</p>
+      <ul className="space-y-1.5">
+        {requirements.map((req, i) => (
+          <li key={i} className="flex items-center text-xs gap-2">
+            <div className={cn(
+              "flex items-center justify-center w-4 h-4 rounded-full border",
+              req.met 
+                ? "bg-emerald-500 border-emerald-500 text-white" 
+                : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-transparent"
+            )}>
+              <Check className="w-2.5 h-2.5" />
+            </div>
+            <span className={cn(
+              "transition-colors",
+              req.met ? "text-zinc-900 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-500"
+            )}>
+              {req.text}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -135,137 +150,133 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <Card className="w-full max-w-md shadow-xl border border-border backdrop-blur-md">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500 via-purple-500 to-blue-600 shadow-lg">
-            <svg
-              className="h-7 w-7 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-          </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            Create your account
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Start collecting feedback in minutes
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error &&
-            <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-sm text-destructive font-medium animate-in fade-in">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
+    <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
+             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
+                 <Command className="h-6 w-6" />
+             </div>
+             <div className="space-y-2">
+                 <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                     Create an account
+                 </h1>
+                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                     Enter your details below to create your account
+                 </p>
+             </div>
+        </div>
+
+      <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <CardContent className="pt-6">
+           {error &&
+            <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-50 dark:bg-red-900/10 p-3 text-sm text-red-600 dark:text-red-400">
+               <AlertCircle className="h-4 w-4 shrink-0" />
+               <span>{error}</span>
             </div>
-          }
-          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-            <div>
-              <Label htmlFor="name">Full name</Label>
-              <div className="relative mt-1">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  name="name"
-                  autoComplete="name"
-                  required
-                  type="text"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="pl-9 shadow-none bg-background border-border ring-0 focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="email">Email address</Label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  name="email"
-                  autoComplete="email"
-                  required
-                  type="email"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="pl-9 shadow-none bg-background border-border ring-0 focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  name="password"
-                  autoComplete="new-password"
-                  required
-                  type="password"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="pl-9 shadow-none bg-background border-border ring-0 focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirm password</Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  autoComplete="new-password"
-                  required
-                  type="password"
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="pl-9 shadow-none bg-background border-border ring-0 focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
-            </div>
-            <PasswordRequirements
-              password={formData.password}
-              confirmPassword={formData.confirmPassword}
-            />
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full font-bold mt-3 text-white bg-gradient-to-r from-indigo-500 via-purple-600 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
-              size="lg"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                'Create account'
-              )}
-            </Button>
-          </form>
+           }
+          
+           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+             <div className="space-y-2">
+               <Label htmlFor="name">Full Name</Label>
+               <Input
+                   id="name"
+                   name="name"
+                   autoComplete="name"
+                   required
+                   type="text"
+                   placeholder="John Doe"
+                   value={formData.name}
+                   onChange={handleChange}
+                   className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500 rounded-lg"
+               />
+             </div>
+             
+             <div className="space-y-2">
+               <Label htmlFor="email">Email</Label>
+               <Input
+                   id="email"
+                   name="email"
+                   autoComplete="email"
+                   required
+                   type="email"
+                   placeholder="name@example.com"
+                   value={formData.email}
+                   onChange={handleChange}
+                   className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500 rounded-lg"
+               />
+             </div>
+             
+             <div className="space-y-2">
+               <Label htmlFor="password">Password</Label>
+               <Input
+                   id="password"
+                   name="password"
+                   autoComplete="new-password"
+                   required
+                   type="password"
+                   placeholder="••••••••"
+                   value={formData.password}
+                   onChange={handleChange}
+                   className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500 rounded-lg"
+               />
+             </div>
+             
+             <div className="space-y-2">
+               <Label htmlFor="confirmPassword">Confirm Password</Label>
+               <Input
+                   id="confirmPassword"
+                   name="confirmPassword"
+                   autoComplete="new-password"
+                   required
+                   type="password"
+                   placeholder="••••••••"
+                   value={formData.confirmPassword}
+                   onChange={handleChange}
+                   className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500 rounded-lg"
+               />
+             </div>
+
+             <PasswordRequirements
+               password={formData.password}
+               confirmPassword={formData.confirmPassword}
+             />
+
+             <Button
+               type="submit"
+               disabled={isLoading}
+               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 rounded-lg h-10 font-medium mt-2"
+             >
+               {isLoading ? (
+                 <>
+                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                   Creating account...
+                 </>
+               ) : (
+                 'Create account'
+               )}
+             </Button>
+           </form>
         </CardContent>
-        <CardFooter>
-          <div className="w-full flex flex-col items-center gap-2">
-            <div className="w-full h-px bg-border my-1" />
-            <p className="text-sm text-muted-foreground text-center">
-              Already have an account?{' '}
-              <Link href="/sign-in" className="font-medium text-indigo-500 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-                Sign in
-              </Link>
-            </p>
-          </div>
+        <CardFooter className="flex flex-col gap-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 rounded-b-xl">
+             <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                Already have an account?{' '}
+                <Link href="/sign-in" className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 underline-offset-4 hover:underline">
+                    Sign in
+                </Link>
+             </div>
         </CardFooter>
       </Card>
+      
+      <p className="px-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          By clicking continue, you agree to our{' '}
+          <Link href="/terms" className="underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-100">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-100">
+            Privacy Policy
+          </Link>
+          .
+        </p>
     </div>
   );
 }

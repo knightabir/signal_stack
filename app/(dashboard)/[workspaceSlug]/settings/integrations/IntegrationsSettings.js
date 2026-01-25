@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Loader2,
-  ArrowLeft,
   Slack,
   Webhook,
   Github,
@@ -15,9 +13,15 @@ import {
   Eye,
   EyeOff,
   Lock,
-  Zap,
+  ArrowUpRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 const EVENTS = [
   { id: 'feedback.created', label: 'New feedback submitted' },
@@ -45,6 +49,7 @@ export default function IntegrationsSettings({ workspace, canEdit, featureAccess
 
   useEffect(() => {
     fetchIntegrations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspace.id]);
 
   const fetchIntegrations = async () => {
@@ -144,245 +149,250 @@ export default function IntegrationsSettings({ workspace, canEdit, featureAccess
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-20 min-h-[300px]">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href={`/${workspace.slug}/settings`}
-          className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">Integrations</h1>
-            {isLocked && integrationsFeature.upgradeBadge && (
-              <button
-                onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
-              >
-                <Zap className="w-3 h-3" />
-                {integrationsFeature.upgradeBadge.text}
-              </button>
-            )}
-          </div>
-          <p className="text-slate-400">Connect with external services</p>
+    <div className="w-full space-y-6 md:pb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Integrations</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Connect SignalStack with your favorite tools</p>
         </div>
+        {canEdit && (
+            <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20"
+            >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Save Changes
+            </Button>
+        )}
       </div>
 
       {/* Upgrade Banner for Locked Feature */}
       {isLocked && (
-        <div
+        <Card
           onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
-          className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 rounded-xl p-5 cursor-pointer hover:border-amber-500/50 transition-all group"
+          className={cn(
+            'w-full cursor-pointer border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 hover:border-amber-300 dark:hover:border-amber-500/50 transition-all group pointer-events-auto shadow-sm'
+          )}
         >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-amber-500/20 rounded-xl">
-              <Lock className="w-6 h-6 text-amber-400" />
+          <CardContent className="flex items-center gap-4 py-6">
+            <div className="p-3 bg-amber-100 dark:bg-amber-500/20 rounded-xl">
+              <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-amber-400">Upgrade to Pro for Integrations</h3>
-              <p className="text-sm text-amber-400/70 mt-0.5">
-                Connect Slack, custom webhooks, and GitHub. Available on Pro and Business plans.
-              </p>
+              <CardTitle className="font-semibold text-amber-900 dark:text-amber-400 text-lg">
+                Upgrade for Integrations
+              </CardTitle>
+              <CardDescription className="text-amber-700 dark:text-amber-400/70 mt-0.5">
+                 Connect Slack, custom webhooks, and GitHub issues. Available on Pro and Business plans.
+              </CardDescription>
             </div>
-            <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white group-hover:scale-105 transition-transform">
-              <Lock className="w-4 h-4 mr-2" />
+            <Button
+              type="button"
+              className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+              tabIndex={-1}
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/${workspace.slug}/settings/billing`);
+              }}
+            >
               Upgrade Now
             </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Slack Integration */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-slate-700 rounded-lg">
-            <Slack className="w-5 h-5 text-[#E01E5A]" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-white">Slack</h2>
-            <p className="text-sm text-slate-400">Get notifications in your Slack channels</p>
-          </div>
-          {data?.slack?.isConfigured && (
-            <span className="ml-auto px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
-              Connected
-            </span>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Webhook URL
-            </label>
-            <input
+      <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+             <div className="flex items-center gap-4">
+                <div className="p-3 bg-[#E01E5A]/10 rounded-xl border border-[#E01E5A]/20">
+                    <Slack className="w-6 h-6 text-[#E01E5A]" />
+                </div>
+                <div>
+                    <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Slack</CardTitle>
+                    <CardDescription>Send notifications to a Slack channel</CardDescription>
+                </div>
+             </div>
+             {data?.slack?.isConfigured && (
+                <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20">
+                    Connected
+                </Badge>
+            )}
+        </CardHeader>
+        <CardContent className="space-y-6 pt-2">
+          <div className="space-y-3">
+            <Label className="text-zinc-900 dark:text-zinc-100">Webhook URL</Label>
+            <Input
               type="url"
               value={slackUrl}
               onChange={(e) => setSlackUrl(e.target.value)}
               disabled={!canEdit}
               placeholder={data?.slack?.webhookUrl || 'https://hooks.slack.com/services/...'}
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
             />
-            <p className="text-xs text-slate-500 mt-1">
-              Create an <a href="https://api.slack.com/messaging/webhooks" target="_blank" className="text-indigo-400 hover:underline">Incoming Webhook</a> in Slack
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Create an <a href="https://api.slack.com/messaging/webhooks" target="_blank" className="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center">Incoming Webhook <ArrowUpRight className="ml-0.5 w-3 h-3" /></a> in Slack and paste the URL here.
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Notify on
-            </label>
-            <div className="space-y-2">
+          <div className="space-y-3">
+            <Label className="text-zinc-900 dark:text-zinc-100">Trigger Events</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
               {EVENTS.filter(e => e.id !== 'feedback.voted').map((event) => (
-                <label key={event.id} className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
+                <div key={event.id} className="flex items-center space-x-3 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                  <Checkbox
+                    id={`slack-${event.id}`}
                     checked={slackEvents.includes(event.id)}
-                    onChange={() => toggleEvent(event.id, 'slack')}
+                    onCheckedChange={() => toggleEvent(event.id, 'slack')}
                     disabled={!canEdit}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500"
                   />
-                  <span className="text-sm text-slate-300">{event.label}</span>
-                </label>
+                  <label
+                    htmlFor={`slack-${event.id}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-700 dark:text-zinc-300 cursor-pointer w-full"
+                  >
+                    {event.label}
+                  </label>
+                </div>
               ))}
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Custom Webhooks */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-slate-700 rounded-lg">
-            <Webhook className="w-5 h-5 text-indigo-400" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-white">Custom Webhooks</h2>
-            <p className="text-sm text-slate-400">Send events to your own endpoints</p>
-          </div>
-          {data?.webhook?.url && (
-            <span className="ml-auto px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
-              Active
-            </span>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Endpoint URL
-            </label>
-            <input
+      <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+             <div className="flex items-center gap-4">
+                <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
+                    <Webhook className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                    <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Custom Webhooks</CardTitle>
+                    <CardDescription>Send event payloads to your API</CardDescription>
+                </div>
+             </div>
+             {data?.webhook?.url && (
+                <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20">
+                    Active
+                </Badge>
+            )}
+        </CardHeader>
+        <CardContent className="space-y-6 pt-2">
+          <div className="space-y-3">
+            <Label className="text-zinc-900 dark:text-zinc-100">Endpoint URL</Label>
+            <Input
               type="url"
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
               disabled={!canEdit}
               placeholder="https://your-api.com/webhook"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Webhook Secret
-            </label>
+          <div className="space-y-3">
+            <Label className="text-zinc-900 dark:text-zinc-100">Signing Secret</Label>
             {newSecret ? (
               <div className="flex gap-2">
                 <div className="flex-1 relative">
-                  <input
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-4 w-4 text-zinc-400" />
+                  </div>
+                  <Input
                     type={showSecret ? 'text' : 'password'}
                     value={newSecret}
                     readOnly
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white font-mono text-sm"
+                    className="pl-10 pr-10 bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 font-mono text-sm"
                   />
                   <button
                     onClick={() => setShowSecret(!showSecret)}
-                    className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
                   >
                     {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <Button onClick={handleCopySecret} variant="ghost">
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                <Button onClick={handleCopySecret} variant="outline" size="icon" className="shrink-0">
+                  {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">
-                  {data?.webhook?.hasSecret ? 'Secret configured' : 'No secret configured'}
+              <div className="flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  {data?.webhook?.hasSecret ? 'Secret configured and hidden' : 'No signing secret generating'}
                 </span>
                 {canEdit && (
-                  <Button onClick={handleRegenerateSecret} variant="ghost" size="sm">
-                    <RefreshCw className="w-4 h-4 mr-1" />
+                  <Button onClick={handleRegenerateSecret} variant="ghost" size="sm" className="h-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+                    <RefreshCw className="w-3.5 h-3.5 mr-2" />
                     {data?.webhook?.hasSecret ? 'Regenerate' : 'Generate'}
                   </Button>
                 )}
               </div>
             )}
-            <p className="text-xs text-slate-500 mt-1">
-              Use this secret to verify webhook signatures (X-Signature-256 header)
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Use this secret to verify webhook signatures using the <code>X-Signature-256</code> header.
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Events
-            </label>
-            <div className="space-y-2">
+          <div className="space-y-3">
+            <Label className="text-zinc-900 dark:text-zinc-100">Trigger Events</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
               {EVENTS.map((event) => (
-                <label key={event.id} className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
+                <div key={event.id} className="flex items-center space-x-3 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                  <Checkbox
+                    id={`webhook-${event.id}`}
                     checked={webhookEvents.includes(event.id)}
-                    onChange={() => toggleEvent(event.id, 'webhook')}
+                    onCheckedChange={() => toggleEvent(event.id, 'webhook')}
                     disabled={!canEdit}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500"
                   />
-                  <span className="text-sm text-slate-300">{event.label}</span>
-                </label>
+                  <label
+                    htmlFor={`webhook-${event.id}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-700 dark:text-zinc-300 cursor-pointer w-full"
+                  >
+                    {event.label}
+                  </label>
+                </div>
               ))}
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* GitHub Info */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-slate-700 rounded-lg">
-            <Github className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-white">GitHub</h2>
-            <p className="text-sm text-slate-400">Link feedback to GitHub issues</p>
-          </div>
-        </div>
-        <p className="text-sm text-slate-400">
-          You can link GitHub issues directly on individual feedback items. Go to any feedback item and add a GitHub issue URL.
-        </p>
-      </div>
-
-      {/* Save Button */}
-      {canEdit && (
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600"
-          >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Save Changes
-          </Button>
-        </div>
-      )}
+      <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <CardContent className="flex items-center gap-5 p-6">
+           <div className="p-3 bg-black dark:bg-white rounded-xl shadow-lg shadow-black/10">
+                <Github className="w-6 h-6 text-white dark:text-black" />
+           </div>
+           <div>
+               <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">GitHub</h3>
+               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                   Link feedback items directly to GitHub issues by pasting the issue URL in any feedback detail page.
+               </p>
+           </div>
+           <div className="ml-auto hidden sm:block">
+               <Button variant="outline" className="gap-2" asChild>
+                   <a href="https://github.com" target="_blank" rel="noreferrer">
+                       Open GitHub <ExternalLink className="w-4 h-4" />
+                   </a>
+               </Button>
+           </div>
+        </CardContent>
+      </Card>
+      
+      {/* GitHub is mainly client-side linking, so no global config needed yet */}
     </div>
   );
+}
+
+function ExternalLink({ className }) {
+    return <ArrowUpRight className={className} />
 }

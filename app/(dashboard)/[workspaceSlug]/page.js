@@ -7,29 +7,23 @@ import {
   MessageSquare,
   ThumbsUp,
   Map,
-  Users,
   CheckCircle2,
-  TrendingUp,
-  ArrowRight,
-  Activity
+  Activity,
+  ArrowUpRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { Button } from "@/components/ui/button";
 
-// Helper to fetch data directly (simulating API call for Server Component efficiency)
-// In a real scenario we might call the service layer directly instead of fetch(url) to avoid network overhead on same server.
-// But for now, we'll import the logic or fetch the absolute URL if needed.
-// Better practice: Refactor the logic from route.js into a service/lib function and call it here.
 async function getDashboardData(workspaceId) {
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/workspaces/${workspaceId}/analytics`, {
             headers: {
-                // Forward the cookie for auth check
                 Cookie: (await (await import('next/headers')).cookies()).toString()
             },
-            cache: 'no-store' // Metrics should be fresh
+            cache: 'no-store' 
         });
         
         if (!res.ok) {
@@ -40,7 +34,7 @@ async function getDashboardData(workspaceId) {
         return res.json();
     } catch (e) {
         console.error("Error fetching dashboard data", e);
-        return null; // Fallback
+        return null; 
     }
 }
 
@@ -72,7 +66,6 @@ export default async function WorkspaceDashboard({ params }) {
 
   const analyticsData = await getDashboardData(workspace._id);
 
-  // Fallback data if API fails or returns empty
   const stats = analyticsData?.stats || { totalFeedback: 0, totalVotes: 0, roadmapItems: 0, doneItems: 0 };
   const chartData = analyticsData?.chartData || [];
   const recentActivity = analyticsData?.recentActivity || [];
@@ -83,36 +76,43 @@ export default async function WorkspaceDashboard({ params }) {
       value: stats.totalFeedback,
       icon: MessageSquare,
       color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
     },
     {
       name: 'Total Votes',
       value: stats.totalVotes,
       icon: ThumbsUp,
       color: 'text-purple-500',
+      bg: 'bg-purple-500/10',
     },
     {
       name: 'In Progress',
       value: stats.roadmapItems,
       icon: Map,
       color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
     },
     {
       name: 'Completed',
       value: stats.doneItems,
       icon: CheckCircle2,
-      color: 'text-green-500',
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
     },
   ];
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-white">Dashboard</h2>
-        <div className="flex items-center space-x-2">
+    <div className="flex-1 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Overview</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Welcome back! Here's what's happening in your workspace.</p>
+        </div>
+        <div className="flex items-center gap-2">
           <Link href={`/p/${workspaceSlug}`} target="_blank">
-            <div className="hidden md:flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors">
-                View Public Board
-            </div>
+             <Button variant="outline" className="hidden md:flex gap-2">
+                Public Board <ArrowUpRight className="w-4 h-4" />
+             </Button>
           </Link>
         </div>
       </div>
@@ -120,17 +120,19 @@ export default async function WorkspaceDashboard({ params }) {
       {/* Overview Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-            <Card key={stat.name} className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl">
+            <Card key={stat.name} className="border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-slate-200">
+                    <CardTitle className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                         {stat.name}
                     </CardTitle>
-                    <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                    <div className={`p-2 rounded-lg ${stat.bg}`}>
+                       <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-white">{stat.value}</div>
-                    <p className="text-xs text-slate-500 mt-1">
-                        +12% from last month
+                    <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stat.value}</div>
+                    <p className="text-xs text-zinc-500 mt-1">
+                        Lifetime total
                     </p>
                 </CardContent>
             </Card>
@@ -139,10 +141,10 @@ export default async function WorkspaceDashboard({ params }) {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         {/* Main Chart */}
-        <Card className="col-span-4 bg-slate-800/50 border-slate-700/50 backdrop-blur-xl">
+        <Card className="col-span-4 border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-sm">
             <CardHeader>
-                <CardTitle className="text-white">Feedback Volume</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-zinc-900 dark:text-zinc-100">Feedback Volume</CardTitle>
+                <CardDescription className="text-zinc-500 dark:text-zinc-400">
                     New feedback submissions over the last 30 days.
                 </CardDescription>
             </CardHeader>
@@ -152,10 +154,10 @@ export default async function WorkspaceDashboard({ params }) {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="col-span-3 bg-slate-800/50 border-slate-700/50 backdrop-blur-xl">
+        <Card className="col-span-3 border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-sm">
             <CardHeader>
-                <CardTitle className="text-white">Recent Activity</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-zinc-900 dark:text-zinc-100">Recent Activity</CardTitle>
+                <CardDescription className="text-zinc-500 dark:text-zinc-400">
                     Latest feedback and updates from your users.
                 </CardDescription>
             </CardHeader>
@@ -166,37 +168,37 @@ export default async function WorkspaceDashboard({ params }) {
       </div>
 
        {/* Quick Actions */}
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+       <div className="grid gap-4 md:grid-cols-3">
           <Link href={`/${workspaceSlug}/feedback`} className="group">
-             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl hover:bg-slate-700/50 transition-colors">
+             <Card className="border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all cursor-pointer h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                   <CardTitle className="text-sm font-medium text-white group-hover:text-indigo-400 transition-colors">Manage Feedback</CardTitle>
-                   <MessageSquare className="h-4 w-4 text-slate-400 group-hover:text-indigo-400" />
+                   <CardTitle className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Manage Feedback</CardTitle>
+                   <MessageSquare className="h-4 w-4 text-zinc-400 group-hover:text-indigo-500" />
                 </CardHeader>
                 <CardContent>
-                   <div className="text-xs text-slate-500">Review and triage incoming feedback</div>
+                   <div className="text-xs text-zinc-500 dark:text-zinc-400">Review and triage incoming feedback from users</div>
                 </CardContent>
              </Card>
           </Link>
           <Link href={`/${workspaceSlug}/roadmap`} className="group">
-             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl hover:bg-slate-700/50 transition-colors">
+             <Card className="border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-sm hover:border-amber-400 dark:hover:border-amber-500/50 transition-all cursor-pointer h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                   <CardTitle className="text-sm font-medium text-white group-hover:text-amber-400 transition-colors">Update Roadmap</CardTitle>
-                   <Map className="h-4 w-4 text-slate-400 group-hover:text-amber-400" />
+                   <CardTitle className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Update Roadmap</CardTitle>
+                   <Map className="h-4 w-4 text-zinc-400 group-hover:text-amber-500" />
                 </CardHeader>
                 <CardContent>
-                   <div className="text-xs text-slate-500">Plan your next big features</div>
+                   <div className="text-xs text-zinc-500 dark:text-zinc-400">Plan your next big features and releases</div>
                 </CardContent>
              </Card>
           </Link>
           <Link href={`/${workspaceSlug}/settings/widget`} className="group">
-             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl hover:bg-slate-700/50 transition-colors">
+             <Card className="border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-sm hover:border-pink-400 dark:hover:border-pink-500/50 transition-all cursor-pointer h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                   <CardTitle className="text-sm font-medium text-white group-hover:text-pink-400 transition-colors">Widget Settings</CardTitle>
-                   <Activity className="h-4 w-4 text-slate-400 group-hover:text-pink-400" />
+                   <CardTitle className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">Widget Settings</CardTitle>
+                   <Activity className="h-4 w-4 text-zinc-400 group-hover:text-pink-500" />
                 </CardHeader>
                 <CardContent>
-                   <div className="text-xs text-slate-500">Customize your feedback widget</div>
+                   <div className="text-xs text-zinc-500 dark:text-zinc-400">Customize appearance and install your widget</div>
                 </CardContent>
              </Card>
           </Link>

@@ -10,6 +10,7 @@ import {
   Code,
   CreditCard,
   Plug,
+  ArrowUpRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 
 export default function GeneralSettings({ workspace, canEdit }) {
@@ -72,15 +72,29 @@ export default function GeneralSettings({ workspace, canEdit }) {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Settings</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Manage workspace preferences</p>
+        </div>
+        <Button asChild variant="outline" className="gap-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+          <Link href={`/p/${workspace.slug}`} target="_blank">
+             View Public Board <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </Button>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Settings Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* General Information */}
-          <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl">
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
              <CardHeader>
                 <div className="flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-indigo-400" />
-                    <CardTitle>General Information</CardTitle>
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">
+                        <Settings className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <CardTitle className="text-lg">General Information</CardTitle>
                 </div>
                 <CardDescription>Basic details about your workspace.</CardDescription>
              </CardHeader>
@@ -92,7 +106,7 @@ export default function GeneralSettings({ workspace, canEdit }) {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         disabled={!canEdit}
-                        className="bg-slate-900/50 border-slate-600"
+                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:bg-white dark:focus:bg-zinc-900 transition-colors"
                     />
                 </div>
                 <div className="space-y-2">
@@ -102,7 +116,7 @@ export default function GeneralSettings({ workspace, canEdit }) {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         disabled={!canEdit}
-                        className="bg-slate-900/50 border-slate-600 resize-none"
+                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:bg-white dark:focus:bg-zinc-900 transition-colors resize-none"
                         rows={3}
                         placeholder="What is this workspace for?"
                     />
@@ -111,11 +125,13 @@ export default function GeneralSettings({ workspace, canEdit }) {
           </Card>
 
           {/* Branding */}
-          <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl">
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
              <CardHeader>
                 <div className="flex items-center gap-2">
-                    <Palette className="h-5 w-5 text-indigo-400" />
-                    <CardTitle>Branding</CardTitle>
+                    <div className="p-2 bg-pink-50 dark:bg-pink-500/10 rounded-lg">
+                        <Palette className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+                    </div>
+                    <CardTitle className="text-lg">Branding</CardTitle>
                 </div>
                 <CardDescription>Customize the look of your public pages.</CardDescription>
              </CardHeader>
@@ -123,7 +139,7 @@ export default function GeneralSettings({ workspace, canEdit }) {
                 <div className="space-y-2">
                     <Label htmlFor="color">Primary Color</Label>
                     <div className="flex items-center gap-3">
-                        <div className="relative h-10 w-10 overflow-hidden rounded-lg border border-slate-600">
+                        <div className="relative h-10 w-10 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm">
                             <input
                                 type="color"
                                 value={primaryColor}
@@ -136,7 +152,7 @@ export default function GeneralSettings({ workspace, canEdit }) {
                             value={primaryColor}
                             onChange={(e) => setPrimaryColor(e.target.value)}
                             disabled={!canEdit}
-                            className="w-32 bg-slate-900/50 border-slate-600 font-mono"
+                            className="w-32 bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 font-mono"
                         />
                     </div>
                 </div>
@@ -144,19 +160,21 @@ export default function GeneralSettings({ workspace, canEdit }) {
           </Card>
 
           {/* Privacy & Access */}
-          <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl">
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
              <CardHeader>
                 <div className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-indigo-400" />
-                    <CardTitle>Privacy & Access</CardTitle>
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg">
+                        <Globe className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <CardTitle className="text-lg">Privacy & Access</CardTitle>
                 </div>
                 <CardDescription>Control who can see and interact with your workspace.</CardDescription>
              </CardHeader>
              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between space-x-2">
+                <div className="flex items-center justify-between space-x-2 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50">
                     <div className="space-y-0.5">
-                        <Label className="text-base">Allow anonymous feedback</Label>
-                        <p className="text-sm text-slate-400">Users can submit feedback without signing in</p>
+                        <Label className="text-base font-medium">Allow anonymous feedback</Label>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Users can submit feedback without signing in</p>
                     </div>
                     <Switch
                         checked={allowAnonymous}
@@ -164,10 +182,10 @@ export default function GeneralSettings({ workspace, canEdit }) {
                         disabled={!canEdit}
                     />
                 </div>
-                <div className="flex items-center justify-between space-x-2">
+                <div className="flex items-center justify-between space-x-2 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50">
                     <div className="space-y-0.5">
-                        <Label className="text-base">Public roadmap</Label>
-                        <p className="text-sm text-slate-400">Anyone can view your product roadmap</p>
+                        <Label className="text-base font-medium">Public roadmap</Label>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Anyone can view your product roadmap</p>
                     </div>
                     <Switch
                         checked={publicRoadmap}
@@ -175,10 +193,10 @@ export default function GeneralSettings({ workspace, canEdit }) {
                         disabled={!canEdit}
                     />
                 </div>
-                <div className="flex items-center justify-between space-x-2">
+                <div className="flex items-center justify-between space-x-2 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50">
                     <div className="space-y-0.5">
-                        <Label className="text-base">Public changelog</Label>
-                        <p className="text-sm text-slate-400">Anyone can view your changelog/announcements</p>
+                        <Label className="text-base font-medium">Public changelog</Label>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Anyone can view your changelog/announcements</p>
                     </div>
                     <Switch
                         checked={publicChangelog}
@@ -191,11 +209,11 @@ export default function GeneralSettings({ workspace, canEdit }) {
 
            {/* Save Button */}
            {canEdit && (
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-4">
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 font-medium shadow-lg shadow-indigo-500/25 min-w-[120px]"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px] shadow-lg shadow-indigo-500/20"
               >
                 {isSaving ? (
                   <>
@@ -214,18 +232,18 @@ export default function GeneralSettings({ workspace, canEdit }) {
 
         {/* Sidebar / Quick Links */}
         <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white">More Settings</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Quick Links</h3>
             <div className="grid gap-4">
                 {settingsLinks.map((link) => (
                     <Link key={link.name} href={link.href}>
-                        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl hover:bg-slate-700/50 transition-colors cursor-pointer">
+                        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-indigo-400 dark:hover:border-indigo-500/50 shadow-sm transition-all cursor-pointer group">
                             <CardContent className="flex items-center gap-4 p-4">
-                                <div className="rounded-lg bg-indigo-500/10 p-2 text-indigo-400">
+                                <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800 p-2 text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                     <link.icon className="h-5 w-5" />
                                 </div>
-                                <div className="space-y-1">
-                                    <h4 className="font-medium text-white leading-none">{link.name}</h4>
-                                    <p className="text-xs text-slate-400">{link.description}</p>
+                                <div className="space-y-0.5">
+                                    <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 leading-none group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{link.name}</h4>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{link.description}</p>
                                 </div>
                             </CardContent>
                         </Card>

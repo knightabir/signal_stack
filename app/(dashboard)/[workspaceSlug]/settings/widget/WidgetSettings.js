@@ -9,12 +9,25 @@ import {
   Check,
   RefreshCw,
   ExternalLink,
-  Settings,
-  ArrowLeft,
   Lock,
-  Zap,
+  Code,
+  Eye,
+  Settings
 } from 'lucide-react';
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 export default function WidgetSettings({ workspace, canEdit, featureAccess }) {
   const router = useRouter();
@@ -37,6 +50,7 @@ export default function WidgetSettings({ workspace, canEdit, featureAccess }) {
 
   useEffect(() => {
     fetchSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspace.id]);
 
   const fetchSettings = async () => {
@@ -120,232 +134,275 @@ export default function WidgetSettings({ workspace, canEdit, featureAccess }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="w-full flex items-center justify-center py-20 min-h-[300px]">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href={`/${workspace.slug}/settings`}
-          className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">Widget Settings</h1>
-            {isLocked && widgetFeature.upgradeBadge && (
-              <button
-                onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
-              >
-                <Zap className="w-3 h-3" />
-                {widgetFeature.upgradeBadge.text}
-              </button>
-            )}
-          </div>
-          <p className="text-slate-400">Embed feedback collection on your website</p>
-        </div>
-      </div>
-
+    <div className="w-full space-y-6 md:pb-8">
       {/* Upgrade Banner for Locked Feature */}
       {isLocked && (
-        <div
+        <Card
           onClick={() => router.push(`/${workspace.slug}/settings/billing`)}
-          className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 rounded-xl p-5 cursor-pointer hover:border-amber-500/50 transition-all group"
+          className={cn(
+            'w-full cursor-pointer border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 hover:border-amber-300 dark:hover:border-amber-500/50 transition-all group pointer-events-auto shadow-sm'
+          )}
         >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-amber-500/20 rounded-xl">
-              <Lock className="w-6 h-6 text-amber-400" />
+          <CardContent className="flex items-center gap-4 py-6">
+            <div className="p-3 bg-amber-100 dark:bg-amber-500/20 rounded-xl">
+              <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-amber-400">Upgrade to Pro for Widget Access</h3>
-              <p className="text-sm text-amber-400/70 mt-0.5">
+              <CardTitle className="font-semibold text-amber-900 dark:text-amber-400 text-lg">
+                Upgrade to Pro for Widget Access
+              </CardTitle>
+              <CardDescription className="text-amber-700 dark:text-amber-400/70 mt-0.5">
                 Embed a beautiful feedback widget directly in your product. Available on Pro and Business plans.
-              </p>
+              </CardDescription>
             </div>
-            <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white group-hover:scale-105 transition-transform">
+            <Button
+              type="button"
+              className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+              tabIndex={-1}
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/${workspace.slug}/settings/billing`);
+              }}
+            >
               Upgrade Now
             </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Enable Widget */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-        <label className="flex items-start gap-4 cursor-pointer">
-          <input
-            type="checkbox"
+      <Card className="w-full border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <CardContent className="flex items-center gap-4 py-6">
+          <Switch
             checked={settings.enabled}
-            onChange={(e) => setSettings((prev) => ({ ...prev, enabled: e.target.checked }))}
+            onCheckedChange={(value) =>
+              setSettings((prev) => ({ ...prev, enabled: value }))
+            }
             disabled={!canEdit}
-            className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-900 text-indigo-500"
+            id="enabled-switch"
           />
           <div>
-            <span className="text-lg font-medium text-white">Enable Widget</span>
-            <p className="text-sm text-slate-400 mt-1">
+            <Label htmlFor="enabled-switch" className="text-base text-zinc-900 dark:text-zinc-100 font-medium">
+              Enable Widget
+            </Label>
+            <div className="text-sm text-zinc-500 dark:text-zinc-400">
               Allow the feedback widget to be embedded on external websites
-            </p>
-          </div>
-        </label>
-      </div>
-
-      {/* Embed Code */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Embed Code</h2>
-        
-        {settings.token ? (
-          <div className="space-y-4">
-            <div className="relative">
-              <pre className="p-4 bg-slate-900 rounded-lg overflow-x-auto text-sm text-slate-300 font-mono">
-                {embedCode}
-              </pre>
-              <button
-                onClick={handleCopy}
-                className="absolute top-2 right-2 p-2 bg-slate-700 rounded hover:bg-slate-600 text-white"
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </button>
             </div>
-            <p className="text-sm text-slate-400">
-              Add this code before the closing <code className="text-indigo-400">&lt;/body&gt;</code> tag on your website
-            </p>
-            {canEdit && (
-              <Button
-                onClick={handleGenerateToken}
-                disabled={isGenerating}
-                variant="ghost"
-                className="text-red-400 hover:text-red-300"
-              >
-                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                Regenerate Token
-              </Button>
-            )}
           </div>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-slate-400 mb-4">
-              {isLocked 
-                ? 'Upgrade to Pro to get your embed code'
-                : 'Generate a token to get your embed code'
-              }
-            </p>
-            {canEdit && (
-              <Button
-                onClick={isLocked ? () => router.push(`/${workspace.slug}/settings/billing`) : handleGenerateToken}
-                disabled={isGenerating}
-                className={isLocked 
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700'
-                  : 'bg-gradient-to-r from-indigo-500 to-purple-600'
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 md:grid-cols-2">
+         {/* Configuration */}
+         <Card className="w-full border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-zinc-500" />
+                    <CardTitle className="text-zinc-900 dark:text-zinc-100 text-lg">Configuration</CardTitle>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+            {/* Position */}
+            <div>
+                <Label htmlFor="widget-position" className="block text-sm mb-2 text-zinc-700 dark:text-zinc-300">
+                Button Position
+                </Label>
+                <Select
+                value={settings.position}
+                onValueChange={(value) =>
+                    setSettings((prev) => ({ ...prev, position: value }))
                 }
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : isLocked ? (
-                  <Lock className="w-4 h-4 mr-2" />
-                ) : null}
-                {isLocked ? 'Upgrade to Pro' : 'Generate Embed Code'}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+                disabled={!canEdit}
+                >
+                <SelectTrigger
+                    id="widget-position"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100"
+                >
+                    <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                    <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                </SelectContent>
+                </Select>
+            </div>
 
-      {/* Configuration */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 space-y-6">
-        <h2 className="text-lg font-semibold text-white">Configuration</h2>
+            {/* Theme */}
+            <div>
+                <Label htmlFor="widget-theme" className="block text-sm mb-2 text-zinc-700 dark:text-zinc-300">
+                Widget Theme
+                </Label>
+                <Select
+                value={settings.theme}
+                onValueChange={(value) =>
+                    setSettings((prev) => ({ ...prev, theme: value }))
+                }
+                disabled={!canEdit}
+                >
+                <SelectTrigger
+                    id="widget-theme"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100"
+                >
+                    <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="auto">Auto (match system)</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                </SelectContent>
+                </Select>
+            </div>
 
-        {/* Position */}
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Button Position
-          </label>
-          <select
-            value={settings.position}
-            onChange={(e) => setSettings((prev) => ({ ...prev, position: e.target.value }))}
-            disabled={!canEdit}
-            className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="bottom-right">Bottom Right</option>
-            <option value="bottom-left">Bottom Left</option>
-          </select>
+            {/* Button Text */}
+            <div>
+                <Label htmlFor="button-text" className="block text-sm mb-2 text-zinc-700 dark:text-zinc-300">
+                Button Text
+                </Label>
+                <Input
+                type="text"
+                id="button-text"
+                value={settings.buttonText}
+                onChange={(e) =>
+                    setSettings((prev) => ({
+                    ...prev,
+                    buttonText: e.target.value,
+                    }))
+                }
+                disabled={!canEdit}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100"
+                maxLength={30}
+                />
+            </div>
+
+            {/* Anonymous */}
+            <div className="flex items-center gap-3 p-3 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
+                <Switch
+                checked={settings.allowAnonymous}
+                onCheckedChange={(value) =>
+                    setSettings((prev) => ({ ...prev, allowAnonymous: value }))
+                }
+                disabled={!canEdit}
+                id="allow-anonymous-switch"
+                />
+                <Label htmlFor="allow-anonymous-switch" className="text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer">
+                Allow anonymous feedback submissions
+                </Label>
+            </div>
+            </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+            {/* Embed Code */}
+            <Card className="w-full border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm h-full flex flex-col">
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Code className="w-4 h-4 text-zinc-500" />
+                        <CardTitle className="text-zinc-900 dark:text-zinc-100 text-lg">Embed Code</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col">
+                {settings.token ? (
+                    <div className="space-y-4 flex-1">
+                    <div className="relative">
+                        <pre className="p-4 bg-zinc-950 dark:bg-black rounded-lg overflow-x-auto text-sm text-zinc-300 font-mono whitespace-pre-wrap border border-zinc-800">
+                        {embedCode}
+                        </pre>
+                        <Button
+                        size="icon"
+                        variant="secondary"
+                        onClick={handleCopy}
+                        className="absolute top-2 right-2 h-8 w-8"
+                        aria-label={copied ? "Copied!" : "Copy embed code"}
+                        >
+                        {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                    </div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                        Add this code before the closing{' '}
+                        <code className="bg-zinc-100 dark:bg-zinc-800 px-1 rounded text-indigo-500 font-mono text-xs">&lt;/body&gt;</code> tag.
+                    </div>
+                    {canEdit && (
+                        <div className="pt-4 mt-auto">
+                            <Button
+                            onClick={handleGenerateToken}
+                            disabled={isGenerating}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center"
+                            >
+                            {isGenerating ? (
+                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                            )}
+                            Regenerate Token
+                            </Button>
+                        </div>
+                    )}
+                    </div>
+                ) : (
+                    <div className="text-center py-8 flex-1 flex flex-col items-center justify-center">
+                    <p className="text-zinc-500 dark:text-zinc-400 mb-4 max-w-xs mx-auto">
+                        {isLocked
+                        ? 'Upgrade to Pro to get your embed code'
+                        : 'Generate a token to get your unique embed code'}
+                    </p>
+                    {canEdit && (
+                        <Button
+                        onClick={
+                            isLocked
+                            ? () => router.push(`/${workspace.slug}/settings/billing`)
+                            : handleGenerateToken
+                        }
+                        disabled={isGenerating}
+                        className={isLocked
+                            ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        }
+                        >
+                        {isGenerating ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : isLocked ? (
+                            <Lock className="w-4 h-4 mr-2" />
+                        ) : null}
+                        {isLocked ? 'Upgrade to Pro' : 'Generate Embed Code'}
+                        </Button>
+                    )}
+                    </div>
+                )}
+                </CardContent>
+            </Card>
         </div>
-
-        {/* Theme */}
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Widget Theme
-          </label>
-          <select
-            value={settings.theme}
-            onChange={(e) => setSettings((prev) => ({ ...prev, theme: e.target.value }))}
-            disabled={!canEdit}
-            className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="auto">Auto (match system)</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </div>
-
-        {/* Button Text */}
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Button Text
-          </label>
-          <input
-            type="text"
-            value={settings.buttonText}
-            onChange={(e) => setSettings((prev) => ({ ...prev, buttonText: e.target.value }))}
-            disabled={!canEdit}
-            className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            maxLength={30}
-          />
-        </div>
-
-        {/* Anonymous */}
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={settings.allowAnonymous}
-            onChange={(e) => setSettings((prev) => ({ ...prev, allowAnonymous: e.target.checked }))}
-            disabled={!canEdit}
-            className="w-5 h-5 rounded border-slate-600 bg-slate-900 text-indigo-500"
-          />
-          <span className="text-sm text-slate-300">Allow anonymous feedback submissions</span>
-        </label>
       </div>
 
       {/* Save Button */}
       {canEdit && (
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center w-full pt-4 border-t border-zinc-200 dark:border-zinc-800">
+           {settings.token && (
+             <Link
+                href={`/widget/${settings.token}`}
+                target="_blank"
+                className="inline-flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors text-sm font-medium"
+            >
+                <Eye className="w-4 h-4" />
+                Preview Widget
+            </Link>
+           )}
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white ml-auto"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Save Settings
           </Button>
-        </div>
-      )}
-
-      {/* Preview Link */}
-      {settings.token && (
-        <div className="text-center">
-          <Link
-            href={`/widget/${settings.token}`}
-            target="_blank"
-            className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Preview Widget
-          </Link>
         </div>
       )}
     </div>

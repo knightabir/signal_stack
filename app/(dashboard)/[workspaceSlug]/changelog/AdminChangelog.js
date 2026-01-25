@@ -13,8 +13,16 @@ import {
   Calendar,
   X,
   Check,
+  Megaphone,
+  ArrowUpRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminChangelog({ workspace, feedbackOptions, roadmapOptions, canEdit }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -104,30 +112,27 @@ export default function AdminChangelog({ workspace, feedbackOptions, roadmapOpti
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Changelog</h1>
-          <p className="text-slate-400">Announce product updates</p>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Changelog</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Announce product updates</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href={`/p/${workspace.slug}/changelog`}
-            target="_blank"
-            className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300"
-          >
-            <ExternalLink className="w-4 h-4" />
-            View Public
-          </Link>
+          <Button asChild variant="outline" className="gap-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+            <Link href={`/p/${workspace.slug}/changelog`} target="_blank">
+               Public Feed <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </Button>
           {canEdit && (
             <Button
               onClick={() => {
                 setEditingItem(null);
                 setShowEditor(true);
               }}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
-              New Announcement
+              New Update
             </Button>
           )}
         </div>
@@ -139,12 +144,16 @@ export default function AdminChangelog({ workspace, feedbackOptions, roadmapOpti
           <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
       ) : announcements.length === 0 ? (
-        <div className="text-center py-20 bg-slate-800/50 border border-slate-700/50 rounded-xl">
-          <Calendar className="w-12 h-12 mx-auto text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No announcements yet</h3>
-          <p className="text-slate-400 mb-6">Create your first changelog entry</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-full mb-3">
+            <Megaphone className="w-6 h-6 text-zinc-400 dark:text-zinc-500" />
+          </div>
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">No announcements yet</h3>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-6 max-w-sm mx-auto">
+            Keep your users in the loop by publishing your first product update.
+          </p>
           {canEdit && (
-            <Button onClick={() => setShowEditor(true)}>Create Announcement</Button>
+            <Button onClick={() => setShowEditor(true)}>Create Update</Button>
           )}
         </div>
       ) : (
@@ -152,56 +161,84 @@ export default function AdminChangelog({ workspace, feedbackOptions, roadmapOpti
           {announcements.map((announcement) => (
             <div
               key={announcement.id}
-              className={`bg-slate-800/50 border rounded-xl p-4 ${
-                announcement.isPublished ? 'border-slate-700/50' : 'border-yellow-500/30'
+              className={`bg-white dark:bg-zinc-900 border rounded-xl p-5 shadow-sm transition-all ${
+                announcement.isPublished 
+                    ? 'border-zinc-200 dark:border-zinc-800' 
+                    : 'border-yellow-200 dark:border-yellow-500/30 ring-1 ring-yellow-500/20 bg-yellow-50/30 dark:bg-yellow-500/5'
               }`}
             >
-              <div className="flex items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium text-white truncate">{announcement.title}</h3>
+              <div className="flex items-start gap-5">
+                 <div className="hidden sm:flex flex-col items-center justify-center w-14 h-14 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold border border-zinc-200 dark:border-zinc-700 shrink-0">
+                    <span className="text-xs font-normal text-zinc-500 uppercase tracking-widest">{new Date(announcement.publishedAt || announcement.createdAt).toLocaleDateString('en-US', { month: 'short' })}</span>
+                    <span className="text-xl leading-none">{new Date(announcement.publishedAt || announcement.createdAt).getDate()}</span>
+                 </div>
+
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <div className="flex items-center gap-3 mb-1.5 justify-between sm:justify-start">
+                    <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 leading-tight">{announcement.title}</h3>
                     {!announcement.isPublished && (
-                      <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
+                      <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-500/20">
                         Draft
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-slate-400 line-clamp-2">
-                    {announcement.content || 'No content'}
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed mb-3">
+                    {announcement.content || 'No content provided'}
                   </p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
-                    <span>{formatDate(announcement.publishedAt || announcement.createdAt)}</span>
-                    <span>{announcement.linkedFeedback?.length || 0} feedback linked</span>
-                    <span>{announcement.linkedRoadmap?.length || 0} roadmap linked</span>
+                  
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                    <span className="sm:hidden">{formatDate(announcement.publishedAt || announcement.createdAt)}</span>
+                    {(announcement.linkedFeedback?.length > 0 || announcement.linkedRoadmap?.length > 0) && (
+                        <div className="flex items-center gap-3">
+                             {announcement.linkedFeedback?.length > 0 && (
+                                <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                    {announcement.linkedFeedback.length} feedback
+                                </span>
+                             )}
+                             {announcement.linkedRoadmap?.length > 0 && (
+                                 <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    {announcement.linkedRoadmap.length} roadmap
+                                 </span>
+                             )}
+                        </div>
+                    )}
                   </div>
                 </div>
 
                 {canEdit && (
-                  <div className="flex items-center gap-1">
-                    <button
+                  <div className="flex flex-col sm:flex-row items-center gap-1 ml-auto shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
                       onClick={() => handleTogglePublish(announcement.id, announcement.isPublished)}
-                      className={`p-2 rounded-lg hover:bg-slate-700 ${
-                        announcement.isPublished ? 'text-green-400' : 'text-slate-400'
+                      className={`h-8 w-8 hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                        announcement.isPublished ? 'text-green-600 dark:text-green-400' : 'text-zinc-400'
                       }`}
                       title={announcement.isPublished ? 'Unpublish' : 'Publish'}
                     >
-                      {announcement.isPublished ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                    </button>
-                    <button
+                      {announcement.isPublished ? <Check className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
                       onClick={() => {
                         setEditingItem(announcement);
                         setShowEditor(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700"
+                      className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
                       <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
                       onClick={() => handleDelete(announcement.id)}
-                      className="p-2 text-slate-400 hover:text-red-400 rounded-lg hover:bg-slate-700"
+                      className="h-8 w-8 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -211,7 +248,7 @@ export default function AdminChangelog({ workspace, feedbackOptions, roadmapOpti
       )}
 
       {/* Editor Modal */}
-      {showEditor && (
+      <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <AnnouncementEditor
           announcement={editingItem}
           feedbackOptions={feedbackOptions}
@@ -222,7 +259,7 @@ export default function AdminChangelog({ workspace, feedbackOptions, roadmapOpti
             setEditingItem(null);
           }}
         />
-      )}
+      </Dialog>
     </div>
   );
 }
@@ -267,133 +304,138 @@ function AnnouncementEditor({ announcement, feedbackOptions, roadmapOptions, onS
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl shadow-xl my-8">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h2 className="text-lg font-bold text-white">
-            {announcement ? 'Edit Announcement' : 'New Announcement'}
-          </h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+            <DialogTitle>{announcement ? 'Edit Announcement' : 'New Announcement'}</DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5">
           {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Title <span className="text-red-400">*</span>
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">
+              Title <span className="text-red-500">*</span>
             </label>
-            <input
+            <Input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="What's new?"
-              maxLength={200}
+              placeholder="What's new in this version?"
+              className="bg-white dark:bg-zinc-900"
             />
           </div>
 
           {/* Content */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">
               Content (Markdown supported)
             </label>
-            <textarea
+            <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-mono text-sm"
-              placeholder="Describe the update..."
-              rows={8}
+              placeholder="Describe the new features, improvements, and fixes..."
+              className="min-h-[150px] bg-white dark:bg-zinc-900 font-mono text-sm resize-none"
             />
           </div>
 
-          {/* Link Feedback */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Link Feedback Items
-            </label>
-            <div className="max-h-32 overflow-y-auto space-y-1 bg-slate-900/30 p-2 rounded-lg">
-              {feedbackOptions.length === 0 ? (
-                <p className="text-sm text-slate-500">No feedback available</p>
-              ) : (
-                feedbackOptions.slice(0, 20).map((f) => (
-                  <label
-                    key={f.id}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-slate-700/50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={linkedFeedbackIds.includes(f.id)}
-                      onChange={() => toggleFeedback(f.id)}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500"
-                    />
-                    <span className="text-sm text-slate-300 truncate">{f.title}</span>
-                    <span className="text-xs text-slate-500 ml-auto">{f.voteCount} votes</span>
-                  </label>
-                ))
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Link Feedback */}
+            <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Linked Feedback
+                </label>
+                <ScrollArea className="h-40 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-2">
+                {feedbackOptions.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-xs text-zinc-400">No feedback items</div>
+                ) : (
+                    <div className="space-y-1">
+                        {feedbackOptions.map((f) => (
+                        <label
+                            key={f.id}
+                            className="flex items-start gap-2 p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                        >
+                            <Checkbox
+                                checked={linkedFeedbackIds.includes(f.id)}
+                                onCheckedChange={() => toggleFeedback(f.id)}
+                                className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{f.title}</p>
+                                <p className="text-[10px] text-zinc-500">{f.voteCount} votes</p>
+                            </div>
+                        </label>
+                        ))}
+                    </div>
+                )}
+                </ScrollArea>
             </div>
-          </div>
 
-          {/* Link Roadmap */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Link Roadmap Items
-            </label>
-            <div className="max-h-32 overflow-y-auto space-y-1 bg-slate-900/30 p-2 rounded-lg">
-              {roadmapOptions.length === 0 ? (
-                <p className="text-sm text-slate-500">No roadmap items available</p>
-              ) : (
-                roadmapOptions.map((r) => (
-                  <label
-                    key={r.id}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-slate-700/50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={linkedRoadmapIds.includes(r.id)}
-                      onChange={() => toggleRoadmap(r.id)}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500"
-                    />
-                    <span className="text-sm text-slate-300 truncate">{r.title}</span>
-                    <span className="text-xs text-slate-500 ml-auto capitalize">{r.stage.replace('_', ' ')}</span>
-                  </label>
-                ))
-              )}
+            {/* Link Roadmap */}
+            <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Linked Roadmap
+                </label>
+                <ScrollArea className="h-40 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-2">
+                {roadmapOptions.length === 0 ? (
+                     <div className="flex items-center justify-center h-full text-xs text-zinc-400">No roadmap items</div>
+                ) : (
+                    <div className="space-y-1">
+                        {roadmapOptions.map((r) => (
+                        <label
+                            key={r.id}
+                            className="flex items-start gap-2 p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                        >
+                             <Checkbox
+                                checked={linkedRoadmapIds.includes(r.id)}
+                                onCheckedChange={() => toggleRoadmap(r.id)}
+                                className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{r.title}</p>
+                                <p className="text-[10px] text-zinc-500 capitalize">{r.stage.replace('_', ' ')}</p>
+                            </div>
+                        </label>
+                        ))}
+                    </div>
+                )}
+                </ScrollArea>
             </div>
           </div>
 
           {/* Publish Toggle */}
-          <label className="flex items-center gap-3 p-3 bg-slate-900/30 rounded-lg cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isPublished}
-              onChange={(e) => setIsPublished(e.target.checked)}
-              className="w-5 h-5 rounded border-slate-600 bg-slate-900 text-green-500"
+          <div className="flex items-center space-x-2 bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+            <Checkbox 
+                id="publish-toggle"
+                checked={isPublished}
+                onCheckedChange={(checked) => setIsPublished(!!checked)}
             />
-            <div>
-              <span className="text-sm font-medium text-white">Publish immediately</span>
-              <p className="text-xs text-slate-400">Make visible on public changelog</p>
+            <div className="grid gap-1.5 leading-none">
+                <label
+                    htmlFor="publish-toggle"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                    Publish immediately
+                </label>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    If unchecked, this will be saved as a draft visible only to admins.
+                </p>
             </div>
-          </label>
+         </div>
+        </form>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-            <Button type="button" variant="ghost" onClick={onClose}>
+        <DialogFooter className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 mt-auto">
+             <Button variant="ghost" type="button" disabled={isLoading} onClick={onClose}>
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={!title.trim() || isLoading}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600"
+              onClick={handleSubmit} // Using onClick here because the button is outside the form
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Announcement'}
             </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </DialogFooter>
+    </DialogContent>
   );
 }
